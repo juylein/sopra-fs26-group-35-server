@@ -6,8 +6,11 @@ import tools.jackson.databind.ObjectMapper;
 
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs26.service.UserService;
+import ch.uzh.ifi.hase.soprafs26.service.LeaderboardService;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -20,6 +23,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.beans.Transient;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,6 +51,9 @@ public class UserControllerTest {
 
 	@MockitoBean
 	private UserService userService;
+
+	@MockitoBean
+	private LeaderboardService leaderboardService;
 
 	@Test
 	public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
@@ -99,6 +108,78 @@ public class UserControllerTest {
 				.andExpect(jsonPath("$.name", is(user.getName())))
 				.andExpect(jsonPath("$.username", is(user.getUsername())))
 				.andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+	}
+
+	@Test
+	public void getUserStats_validId_ReturnOK() throws Exception {
+		Long userId = 1L;
+
+    	User user = new User();
+    	user.setId(userId);
+    	user.setName("Test User");
+    	user.setUsername("testUsername");
+
+    	// Suppose user has 5 books read and 100 pages read
+    	// You can mock methods in User if needed
+    	// Here we can just assume getBooksRead() and getPagesRead() are called by mapper
+
+    	Leaderboard leaderboard = new Leaderboard();
+		leaderboard.setTotalPoints();
+		leaderboard.addReadingPoints(50L);
+		leaderboard.addQuizzPoints(30L);
+
+    	UserStatsGetDTO userStatsDTO = new UserStatsGetDTO();
+    	userStatsDTO.setBooksRead(user.getBooksRead()); 
+    	userStatsDTO.setPagesRead(user.getPagesRead()); 
+		userStatsDTO.setNumFriends(user.getNumFriends());
+		userStatsDTO.setTotalPoints(leaderboard.getTotalPoints());
+
+    	userStatsDTO.setTotalPoints(leaderboard.getTotalPoints());
+
+		// mock services
+    	given(userService.getUserById(userId)).willReturn(user);
+    	given(leaderboardService.getLeaderboardByUser(user)).willReturn(leaderboard);
+
+		MockHttpServletRequestBuilder getRequest = get("/users/{userId}/statistics", userId)
+            .contentType(MediaType.APPLICATION_JSON);
+
+		mockMvc.perform(getRequest)
+            .andExpect(jsonPath("$.booksRead", is(0)))
+			.andExpect(jsonPath("$.pagesRead", is(0)))
+			.andExpect(jsonPath("$.numFriends", is(0)))
+			.andExpect(jsonPath("$.totalPoints", is(80)));
+	}
+
+	@Test
+	public void getTopUsers_ReturnOK() throws Exception {
+		//mocking 5 users
+		List <Leaderboard> mockLeaderboards = new ArrayList<>();
+		
+		for (int i = 1; i <= 5; i++){
+			User user = new User();
+			user.setId((long) i);
+			user.setUsername("user"+ i);
+
+			Leaderboard lb = new Leaderboard();
+			lb.setId((long) i);
+			lb.setUser(user);
+			lb.setTotalPoints();
+			lb.addQuizzPoints(10L*i);
+
+			mockLeaderboards.add(lb);
+		}
+
+		//mock service
+		given(leaderboardService.getLeaderboards(Mockito.any())).willReturn(mockLeaderboards);
+
+		//request
+		mockMvc.perform(get("/users/leaderboard?top=5")
+				.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(5)))
+				.andExpect(jsonPath("$[0].username", is("user1")))
+				.andExpect(jsonPath("$[2].username", is("user3")));
+
 	}
 
 	/**

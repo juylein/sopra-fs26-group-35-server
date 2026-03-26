@@ -3,7 +3,9 @@ package ch.uzh.ifi.hase.soprafs26.rest.mapper;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
+import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
 
@@ -40,4 +42,12 @@ public interface DTOMapper {
     @Mapping(source = "token", target = "token")
     @Mapping(source = "genres", target = "genres")
 	UserGetDTO convertEntityToUserGetDTO(User user);
+
+	@Mapping(source = "user.id", target = "id")
+	@Mapping(source = "user.username", target = "username")
+	@Mapping(source = "user.booksRead", target = "booksRead")
+	@Mapping(source = "user.pagesRead", target = "pagesRead")
+	@Mapping(source = "user.numFriends", target = "numFriends")
+	@Mapping(source = "leaderboard.totalPoints", target = "totalPoints")
+	UserStatsGetDTO convertToUserStatsGetDTO(User user, Leaderboard leaderboard);
 }

@@ -9,8 +9,12 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.web.server.ResponseStatusException;
 
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
+import ch.uzh.ifi.hase.soprafs26.repository.LeaderboardRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,6 +22,12 @@ public class UserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
+
+	@Mock
+	private ShelfRepository shelfRepository;
+
+	@Mock
+	private LeaderboardRepository leaderboardRepository;
 
 	@InjectMocks
 	private UserService userService;
@@ -43,6 +53,10 @@ public class UserServiceTest {
 	public void createUser_validInputs_success() {
 		// when -> any object is being save in the userRepository -> return the dummy
 		// testUser
+		Mockito.when(userRepository.save(Mockito.any())).thenReturn(testUser);
+		Mockito.when(shelfRepository.save(Mockito.any())).thenReturn(new Shelf());
+		Mockito.when(leaderboardRepository.save(Mockito.any())).thenReturn(new Leaderboard());
+
 		User createdUser = userService.createUser(testUser);
 
 		// then
@@ -58,7 +72,7 @@ public class UserServiceTest {
 	@Test
 	public void createUser_duplicateName_throwsException() {
 		// given -> a first user has already been created
-		userService.createUser(testUser);
+		// userService.createUser(testUser);
 
 		// when -> setup additional mocks for UserRepository
 		Mockito.when(userRepository.findByName(Mockito.any())).thenReturn(testUser);
@@ -72,7 +86,7 @@ public class UserServiceTest {
 	@Test
 	public void createUser_duplicateInputs_throwsException() {
 		// given -> a first user has already been created
-		userService.createUser(testUser);
+		// userService.createUser(testUser);
 
 		// when -> setup additional mocks for UserRepository
 		Mockito.when(userRepository.findByName(Mockito.any())).thenReturn(testUser);
