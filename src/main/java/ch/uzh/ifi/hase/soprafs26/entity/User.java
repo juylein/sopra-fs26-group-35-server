@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Internal User Representation
@@ -32,16 +33,29 @@ public class User implements Serializable {
 	@Column(nullable = false, unique = true)
 	private String username;
 
-	@Column(nullable = false, unique = true)
+    @Column(nullable = false)
+    private String password;
+
+	@Column(nullable = true, unique = true)
 	private String token;
 
 	@Column(nullable = false)
 	private UserStatus status;
 
+    @Column(nullable = true)
+    private String bio;
+
+    @ElementCollection
+    @CollectionTable(
+            name = "user_genres",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "genre")
+    private List<String> genres;
+
 	public Long getId() {
 		return id;
 	}
-
 	public void setId(Long id) {
 		this.id = id;
 	}
@@ -49,7 +63,6 @@ public class User implements Serializable {
 	public String getName() {
 		return name;
 	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -57,15 +70,13 @@ public class User implements Serializable {
 	public String getUsername() {
 		return username;
 	}
-
 	public void setUsername(String username) {
 		this.username = username;
 	}
 
-	public String getToken() {
+    public String getToken() {
 		return token;
 	}
-
 	public void setToken(String token) {
 		this.token = token;
 	}
@@ -73,8 +84,16 @@ public class User implements Serializable {
 	public UserStatus getStatus() {
 		return status;
 	}
-
 	public void setStatus(UserStatus status) {
 		this.status = status;
 	}
+
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public List<String> getGenres() { return genres; }
+    public void setGenres(List<String> genres) { this.genres = genres; }
 }
