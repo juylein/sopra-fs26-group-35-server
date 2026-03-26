@@ -48,7 +48,7 @@ public class User implements Serializable {
 	@Column(nullable = true)
 	private String favouriteGenre;
 
-	@OneToOne(mappedBy = "user")
+	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Leaderboard leaderboard;
 
 	@OneToMany(mappedBy= "userA")

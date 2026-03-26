@@ -32,14 +32,16 @@ public class Book implements Serializable {
 	@Column(nullable = false)
 	private String name;
 
-	@Column(nullable = false)
+	@ElementCollection
+	@CollectionTable(name = "book_authors")
+	@Column(name = "author")
 	private List <String> authors;
 
 	@Column(nullable = false)
 	private Long pages;
 
 	@Column(nullable = false)
-	private Integer year;
+	private Integer release_year;
 
 	@Column(nullable = false)
 	private String genre;
@@ -82,12 +84,12 @@ public class Book implements Serializable {
 		this.pages = pages;
 	}
 
-	public Integer getYear() {
-		return year;
+	public Integer getReleaseYear() {
+		return release_year;
 	}
 
-	public void setYear(Integer year) {
-		this.year = year;
+	public void setReleaseYear(Integer release_year) {
+		this.release_year = release_year;
 	}
 
 	public String getGenre() {
