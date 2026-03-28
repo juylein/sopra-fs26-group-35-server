@@ -161,6 +161,10 @@ public class User implements Serializable {
 		.orElse(null);
 	}
 
+	public List<Shelf> getShelves() {
+     	return shelves;
+ 	}
+
 	public Long getBooksRead(){
 		Shelf readShelf = getReadShelf();
 		return readShelf == null ? 0L: readShelf.getBooks().size();
