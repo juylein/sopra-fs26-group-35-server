@@ -1,40 +1,56 @@
- package ch.uzh.ifi.hase.soprafs26.controller;
+package ch.uzh.ifi.hase.soprafs26.controller;
 
- import org.springframework.http.HttpStatus;
- import org.springframework.http.ResponseEntity;
- import org.springframework.web.bind.annotation.GetMapping;
- import org.springframework.web.bind.annotation.RequestHeader;
- import org.springframework.web.bind.annotation.RequestMapping;
- import org.springframework.web.bind.annotation.RestController;
- import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 
- import ch.uzh.ifi.hase.soprafs26.entity.User;
- import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
- import ch.uzh.ifi.hase.soprafs26.rest.dto.LibraryDTO;
- import ch.uzh.ifi.hase.soprafs26.service.LibraryService;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
- @RestController
- @RequestMapping("/library")
- public class LibraryController {
+import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.LibraryDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPostDTO;
+import ch.uzh.ifi.hase.soprafs26.service.LibraryService;
 
-     private final LibraryService libraryService;
-     private final UserRepository userRepository;
+@RestController
+@RequestMapping("/library")
+public class LibraryController {
 
-     public LibraryController(LibraryService libraryService,
-                              UserRepository userRepository) {
-         this.libraryService = libraryService;
-         this.userRepository = userRepository;
-     }
+    private final LibraryService libraryService;
+    private final UserRepository userRepository;
 
-     @GetMapping
-     public ResponseEntity<LibraryDTO> getLibrary(
-             @RequestHeader("Authorization") String token) {
+    public LibraryController(LibraryService libraryService,
+                            UserRepository userRepository) {
+        this.libraryService = libraryService;
+        this.userRepository = userRepository;
+    }
 
-         User user = userRepository.findByToken(token);
-         if (user == null) {
-             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-         }
+    @GetMapping
+    public ResponseEntity<LibraryDTO> getLibrary(
+            @RequestHeader("Authorization") String token) {
 
-         return ResponseEntity.ok(libraryService.getLibrary(user));
-     }
- }
+        User user = userRepository.findByToken(token);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
+
+        return ResponseEntity.ok(libraryService.getLibrary(user));
+    }
+
+    @PostMapping("/shelves")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ShelfGetDTO addShelf(@RequestHeader("Authorization") String token, @RequestBody ShelfPostDTO shelfPostDTO) {
+        User user = userRepository.findByToken(token);
+        if (user == null){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
+        return libraryService.addShelf(user, shelfPostDTO.getName());
+    }    
+}
