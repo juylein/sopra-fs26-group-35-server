@@ -44,9 +44,7 @@ public class LibraryService {
         List<ShelfGetDTO> shelfDTOs = new ArrayList<>();
 
         for (Shelf shelf : user.getShelves()) {
-        // exclude the "Read" shelf — only used for stats
-            if ("Read".equals(shelf.getName())) continue;
-
+        
             ShelfGetDTO shelfDTO = new ShelfGetDTO();
             shelfDTO.setId(shelf.getId());
             shelfDTO.setName(shelf.getName());

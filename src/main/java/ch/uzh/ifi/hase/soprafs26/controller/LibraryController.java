@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,7 +21,7 @@ import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPostDTO;
 import ch.uzh.ifi.hase.soprafs26.service.LibraryService;
 
 @RestController
-@RequestMapping("/library")
+@RequestMapping("/users/{userId}/library")
 public class LibraryController {
 
     private final LibraryService libraryService;
@@ -34,23 +35,37 @@ public class LibraryController {
 
     @GetMapping
     public ResponseEntity<LibraryDTO> getLibrary(
+            @PathVariable Long userId,
             @RequestHeader("Authorization") String token) {
 
         User user = userRepository.findByToken(token);
         if (user == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
         }
+//ensures that the user returned by findByToken is the same one trying to access the library
+        if (!user.getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+      }
 
         return ResponseEntity.ok(libraryService.getLibrary(user));
     }
 
     @PostMapping("/shelves")
     @ResponseStatus(HttpStatus.CREATED)
-    public ShelfGetDTO addShelf(@RequestHeader("Authorization") String token, @RequestBody ShelfPostDTO shelfPostDTO) {
+    public ShelfGetDTO addShelf(            
+            @PathVariable Long userId,
+            @RequestHeader("Authorization") String token, 
+            @RequestBody ShelfPostDTO shelfPostDTO) {
+
         User user = userRepository.findByToken(token);
         if (user == null){
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
         }
+
+         if (!user.getId().equals(userId)) {
+          throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
         return libraryService.addShelf(user, shelfPostDTO.getName());
     }    
 }

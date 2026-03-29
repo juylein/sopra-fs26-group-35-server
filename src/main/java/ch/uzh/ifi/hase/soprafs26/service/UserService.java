@@ -114,6 +114,12 @@ public class UserService {
         toReadShelf.setOwner(newUser);
         shelfRepository.save(toReadShelf);
 
+        //auto-create Recent Readings shelf for new users
+        Shelf recentReadingsShelf = new Shelf();
+        recentReadingsShelf.setName("Recent Readings");
+        recentReadingsShelf.setOwner(newUser);
+        shelfRepository.save(recentReadingsShelf);
+
 		//create "leaderboard" instance for every new User and set values to 0
 		Leaderboard leaderboard = new Leaderboard();
 		leaderboard.setUser(newUser);
