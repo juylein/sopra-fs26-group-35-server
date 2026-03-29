@@ -1,6 +1,8 @@
 package ch.uzh.ifi.hase.soprafs26.rest.dto;
 
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class UserGetDTO {
@@ -12,6 +14,7 @@ public class UserGetDTO {
 	private UserStatus status;
     private String token;
     private List<String> genres;
+    private LocalDateTime creationDate;
 
 	public Long getId() {
 		return id;
@@ -49,4 +52,7 @@ public class UserGetDTO {
 
     public List<String> getGenres() { return genres; }
     public void setGenres(List<String> genres) { this.genres = genres; }
+
+    public LocalDateTime getCreationDate() { return creationDate; }
+    public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
 }

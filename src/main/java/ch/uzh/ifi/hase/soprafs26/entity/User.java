@@ -6,8 +6,10 @@ import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.entity.Friendships;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -50,6 +52,9 @@ public class User implements Serializable {
 
     @Column(nullable = true)
     private String bio;
+
+    @CreationTimestamp
+    private LocalDateTime creationDate;
 
     @ElementCollection
     @CollectionTable(
@@ -108,23 +113,17 @@ public class User implements Serializable {
 		this.status = status;
 	}
 
-    
-  public String getBio() { return bio; }
-  public void setBio(String bio) { this.bio = bio; }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
-  public String getPassword() { return password; }
-  public void setPassword(String password) { this.password = password; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-  public List<String> getGenres() { return genres; }
-  public void setGenres(List<String> genres) { this.genres = genres; }
-	
-  public String getFavGenre(){
-		return favouriteGenre;
-	}
+    public List<String> getGenres() { return genres; }
+    public void setGenres(List<String> genres) { this.genres = genres; }
 
-	public void setFavGenre(String favouriteGenre) {
-		this.favouriteGenre = favouriteGenre;
-	}
+    public LocalDateTime getCreationDate() { return creationDate; }
+    public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
 
 	public Set<User> getFriends(){
 		Set <User> friends = new HashSet<>();
