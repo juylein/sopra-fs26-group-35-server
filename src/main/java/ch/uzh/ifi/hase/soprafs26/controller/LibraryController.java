@@ -1,4 +1,5 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,5 +68,25 @@ public class LibraryController {
         }
 
         return libraryService.addShelf(user, shelfPostDTO.getName());
-    }    
+    }
+
+    @PostMapping("/shelves/{shelfId}/books")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ShelfGetDTO addBookToShelf(
+            @PathVariable Long userId,
+            @PathVariable Long shelfId,
+            @RequestHeader("Authorization") String token,
+            @RequestBody BookPostDTO bookPostDTO) {
+
+        User user = userRepository.findByToken(token);
+        if (user == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
+        if (!user.getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        return libraryService.addBookToShelf(user, shelfId, bookPostDTO);
+    }
+
 }
