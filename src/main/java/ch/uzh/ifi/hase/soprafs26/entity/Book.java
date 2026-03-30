@@ -49,6 +49,9 @@ public class Book implements Serializable {
 	@Column(nullable = true, length = 2000)
 	private String description;
 
+	@Column(nullable = true)
+	private Long status_page_num;
+
 	@ManyToMany(mappedBy = "books")
 	private Set<Shelf> shelves = new HashSet<>();
 
@@ -101,6 +104,15 @@ public class Book implements Serializable {
 	public void setDescription(String description) {
 		this.description = description;
 	}
+
+	public Long getStatusPageNum(){
+		return status_page_num;
+	}
+
+	public void setStatusPageNum(Long status_page_num){
+		this.status_page_num = status_page_num;
+	}
+
 	public Set<Shelf> getShelves(){
 		return shelves;
 	}
