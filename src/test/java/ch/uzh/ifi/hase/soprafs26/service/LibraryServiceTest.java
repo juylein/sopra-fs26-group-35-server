@@ -1,0 +1,130 @@
+package ch.uzh.ifi.hase.soprafs26.service;
+
+import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs26.entity.Book;
+import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
+import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+public class LibraryServiceTest {
+
+    @Mock
+    private ShelfRepository shelfRepository;
+
+    @Mock
+    private BookRepository bookRepository;
+
+    @InjectMocks
+    private LibraryService libraryService;
+
+    private User testUser;
+
+    @BeforeEach
+    public void setup() {
+        testUser = new User();
+        testUser.setId(1L);
+        testUser.setUsername("testUser");
+        testUser.setToken("valid-token");
+        testUser.setStatus(UserStatus.ONLINE);
+    }
+
+    @Test
+    public void addBookToShelf_newBook_createsAndAddsBook() {
+        Shelf shelf = new Shelf();
+        shelf.setId(1L);
+        shelf.setOwner(testUser);
+
+        BookPostDTO dto = new BookPostDTO();
+        dto.setGoogleId("abc123");
+        dto.setName("Dune");
+        dto.setAuthors(List.of("Frank Herbert"));
+        dto.setPages(412L);
+        dto.setReleaseYear(1965);
+        dto.setGenre("Science Fiction");
+        dto.setDescription("Description");
+
+        Book newBook = new Book();
+        newBook.setId("abc123");
+        newBook.setName("Dune");
+
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(bookRepository.findById("abc123")).willReturn(Optional.empty());
+        given(bookRepository.save(any(Book.class))).willReturn(newBook);
+        given(shelfRepository.save(shelf)).willReturn(shelf);
+
+        Shelf result = libraryService.addBookToShelf(testUser, 1L, dto);
+
+        assertNotNull(result);
+        verify(bookRepository, times(1)).save(any(Book.class));
+        verify(shelfRepository, times(1)).save(shelf);
+    }
+
+    @Test
+    public void addBookToShelf_existingBook_reusesBook() {
+        Shelf shelf = new Shelf();
+        shelf.setId(1L);
+        shelf.setOwner(testUser);
+
+        BookPostDTO dto = new BookPostDTO();
+        dto.setGoogleId("abc123");
+
+        Book existingBook = new Book();
+        existingBook.setId("abc123");
+
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(bookRepository.findById("abc123")).willReturn(Optional.of(existingBook));
+        given(shelfRepository.save(shelf)).willReturn(shelf);
+
+        libraryService.addBookToShelf(testUser, 1L, dto);
+
+        verify(bookRepository, never()).save(any(Book.class)); // existing book, no new save
+        verify(shelfRepository, times(1)).save(shelf);
+    }
+
+    @Test
+    public void addBookToShelf_shelfNotFound_throws404() {
+        given(shelfRepository.findById(99L)).willReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> libraryService.addBookToShelf(testUser, 99L, new BookPostDTO()));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    }
+
+    @Test
+    public void addBookToShelf_shelfOwnedByOtherUser_throws403() {
+        User otherUser = new User();
+        otherUser.setId(2L);
+
+        Shelf shelf = new Shelf();
+        shelf.setId(1L);
+        shelf.setOwner(otherUser); // different owner
+
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> libraryService.addBookToShelf(testUser, 1L, new BookPostDTO()));
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    }
+}

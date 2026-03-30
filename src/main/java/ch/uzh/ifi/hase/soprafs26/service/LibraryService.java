@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs26.service;
 
+import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
@@ -27,7 +28,7 @@ public class LibraryService {
         this.bookRepository = bookRepository;
     }
 
-    public Shelf addShelf(User user, String name){
+    public Shelf addShelf(User user, String name) {
         Shelf shelf = new Shelf();
         shelf.setName(name);
         shelf.setOwner(user);
@@ -39,7 +40,7 @@ public class LibraryService {
         return user.getShelves();
     }
 
-    public ShelfGetDTO addBookToShelf(User user, Long shelfId, BookPostDTO bookPostDTO) {
+    public Shelf addBookToShelf(User user, Long shelfId, BookPostDTO bookPostDTO) {
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
 
@@ -47,7 +48,7 @@ public class LibraryService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
-        // Reuse existing book if already in DB -> otherwise create it
+        // Reuse existing book if already in DB, otherwise create it
         Book book = bookRepository.findById(bookPostDTO.getGoogleId()).orElseGet(() -> {
             Book b = new Book();
             b.setId(bookPostDTO.getGoogleId());
@@ -61,26 +62,6 @@ public class LibraryService {
         });
 
         shelf.addBook(book);
-        shelfRepository.save(shelf);
-
-        ShelfGetDTO dto = new ShelfGetDTO();
-        dto.setId(shelf.getId());
-        dto.setName(shelf.getName());
-        dto.setShared(shelf.getShared());
-
-        List<BookGetDTO> bookDTOs = new ArrayList<>();
-        for (Book b : shelf.getBooks()) {
-            BookGetDTO bookDTO = new BookGetDTO();
-            bookDTO.setId(b.getId());
-            bookDTO.setName(b.getName());
-            bookDTO.setAuthors(b.getAuthors());
-            bookDTO.setPages(b.getPages());
-            bookDTO.setReleaseYear(b.getReleaseYear());
-            bookDTO.setGenre(b.getGenre());
-            bookDTO.setDescription(b.getDescription());
-            bookDTOs.add(bookDTO);
-        }
-        dto.setBooks(bookDTOs);
-        return dto;
+        return shelfRepository.save(shelf);
     }
 }

@@ -1,5 +1,7 @@
 package ch.uzh.ifi.hase.soprafs26.rest.mapper;
 
+import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
 import org.junit.jupiter.api.Test;
 
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
@@ -48,4 +50,41 @@ public class DTOMapperTest {
 		assertEquals(user.getUsername(), userGetDTO.getUsername());
 		assertEquals(user.getStatus(), userGetDTO.getStatus());
 	}
+
+    @Test
+    public void testCreateUser_fromUserPostDTO_toUser_withBioAndGenres_success() {
+        UserPostDTO userPostDTO = new UserPostDTO();
+        userPostDTO.setName("name");
+        userPostDTO.setUsername("username");
+        userPostDTO.setBio("I love reading");
+        userPostDTO.setGenres(java.util.List.of("Fantasy", "Thriller"));
+
+        User user = DTOMapper.INSTANCE.convertUserPostDTOtoEntity(userPostDTO);
+
+        assertEquals(userPostDTO.getName(), user.getName());
+        assertEquals(userPostDTO.getUsername(), user.getUsername());
+        assertEquals(userPostDTO.getBio(), user.getBio());
+        assertEquals(userPostDTO.getGenres(), user.getGenres());
+    }
+
+    @Test
+    public void testConvertToUserStatsGetDTO_success() {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+
+        Leaderboard leaderboard = new Leaderboard();
+        leaderboard.setTotalPoints();
+        leaderboard.addReadingPoints(40L);
+        leaderboard.addQuizzPoints(20L);
+
+        UserStatsGetDTO dto = DTOMapper.INSTANCE.convertToUserStatsGetDTO(user, leaderboard);
+
+        assertEquals(user.getId(), dto.getId());
+        assertEquals(user.getUsername(), dto.getUsername());
+        assertEquals(0, dto.getBooksRead());
+        assertEquals(0, dto.getPagesRead());
+        assertEquals(0, dto.getNumFriends());
+        assertEquals(60L, dto.getTotalPoints());
+    }
 }

@@ -1,4 +1,5 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
+import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 
 import org.springframework.http.HttpStatus;
@@ -87,7 +88,8 @@ public class LibraryController {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
-        return libraryService.addBookToShelf(user, shelfId, bookPostDTO);
+        Shelf shelf = libraryService.addBookToShelf(user, shelfId, bookPostDTO);
+        return DTOMapper.INSTANCE.convertShelfEntityToGetDTO(shelf);
     }
 
 }
