@@ -27,7 +27,7 @@ public class Book implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	@Id
-	private Long googleId; //use API ID as primary key
+	private String googleId; //use API ID as primary key
 
 	@Column(nullable = false)
 	private String name;
@@ -37,33 +37,31 @@ public class Book implements Serializable {
 	@Column(name = "author")
 	private List <String> authors;
 
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private Long pages;
 
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private Integer release_year;
 
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private String genre;
 	
-	@Column(nullable = false)
+	@Column(nullable = true, length = 2000)
 	private String description;
 
 	@ManyToMany(mappedBy = "books")
 	private Set<Shelf> shelves = new HashSet<>();
 
-	public Long getId() {
+	public String getId() {
 		return googleId;
 	}
-
-	public void setId(Long googleId) {
+	public void setId(String googleId) {
 		this.googleId = googleId;
 	}
 
 	public String getName() {
 		return name;
 	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -71,7 +69,6 @@ public class Book implements Serializable {
 	public List getAuthors() {
 		return authors;
 	}
-
 	public void setAuthors(List authors) {
 		this.authors = authors;
 	}
@@ -79,7 +76,6 @@ public class Book implements Serializable {
 	public Long getPages() {
 		return pages;
 	}
-
 	public void setPages(Long pages) {
 		this.pages = pages;
 	}
@@ -87,7 +83,6 @@ public class Book implements Serializable {
 	public Integer getReleaseYear() {
 		return release_year;
 	}
-
 	public void setReleaseYear(Integer release_year) {
 		this.release_year = release_year;
 	}
@@ -95,7 +90,6 @@ public class Book implements Serializable {
 	public String getGenre() {
 		return genre;
 	}
-
 	public void setGenre(String genre) {
 		this.genre = genre;
 	}
@@ -107,7 +101,6 @@ public class Book implements Serializable {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-
 	public Set<Shelf> getShelves(){
 		return shelves;
 	}
