@@ -3,12 +3,7 @@ package ch.uzh.ifi.hase.soprafs26.service;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
-import ch.uzh.ifi.hase.soprafs26.entity.Book;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.LibraryDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
-import java.util.List;                        
-import java.util.ArrayList;
+import java.util.List;
 import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 import org.springframework.http.HttpStatus;
@@ -32,50 +27,16 @@ public class LibraryService {
         this.bookRepository = bookRepository;
     }
 
-    public ShelfGetDTO addShelf(User user, String name){
+    public Shelf addShelf(User user, String name){
         Shelf shelf = new Shelf();
         shelf.setName(name);
         shelf.setOwner(user);
         shelf.setShared(false);
-        Shelf saved = shelfRepository.save(shelf);
-    
-        ShelfGetDTO dto = new ShelfGetDTO();
-        dto.setId(saved.getId());
-        dto.setName(saved.getName());
-        dto.setShared(saved.getShared());
-        dto.setBooks(new ArrayList<>());
-        return dto;
+        return shelfRepository.save(shelf);
     }
 
-    public LibraryDTO getLibrary(User user) {
-        List<ShelfGetDTO> shelfDTOs = new ArrayList<>();
-
-        for (Shelf shelf : user.getShelves()) {
-        
-            ShelfGetDTO shelfDTO = new ShelfGetDTO();
-            shelfDTO.setId(shelf.getId());
-            shelfDTO.setName(shelf.getName());
-            shelfDTO.setShared(shelf.getShared());
-
-            List<BookGetDTO> bookDTOs = new ArrayList<>();
-            for (Book book : shelf.getBooks()) {
-                BookGetDTO bookDTO = new BookGetDTO();
-                bookDTO.setId(book.getId());
-                bookDTO.setName(book.getName());
-                bookDTO.setAuthors(book.getAuthors());
-                bookDTO.setPages(book.getPages());
-                bookDTO.setReleaseYear(book.getReleaseYear());
-                bookDTO.setGenre(book.getGenre());
-                bookDTO.setDescription(book.getDescription());
-                bookDTOs.add(bookDTO);
-            }
-            shelfDTO.setBooks(bookDTOs);
-            shelfDTOs.add(shelfDTO);
-        }
-
-        LibraryDTO libraryDTO = new LibraryDTO();
-        libraryDTO.setShelves(shelfDTOs);
-        return libraryDTO;
+    public List<Shelf> getLibrary(User user) {
+        return user.getShelves();
     }
 
     public ShelfGetDTO addBookToShelf(User user, Long shelfId, BookPostDTO bookPostDTO) {

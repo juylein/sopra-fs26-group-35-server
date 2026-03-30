@@ -3,11 +3,17 @@ package ch.uzh.ifi.hase.soprafs26.rest.mapper;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
+import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
+import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
+
+import java.util.List;
 
 /**
  * DTOMapper
@@ -51,4 +57,22 @@ public interface DTOMapper {
 	@Mapping(source = "user.numFriends", target = "numFriends")
 	@Mapping(source = "leaderboard.totalPoints", target = "totalPoints")
 	UserStatsGetDTO convertToUserStatsGetDTO(User user, Leaderboard leaderboard);
+
+	@Mapping(source = "id", target = "id")
+	@Mapping(source = "name", target = "name")
+	@Mapping(source = "authors", target = "authors")
+	@Mapping(source = "pages", target = "pages")
+	@Mapping(source = "releaseYear", target = "releaseYear")
+	@Mapping(source = "genre", target = "genre")
+	@Mapping(source = "description", target = "description")
+	BookGetDTO convertBookEntityToGetDTO(Book book);
+
+	@Mapping(source = "id", target = "id")
+	@Mapping(source = "name", target = "name")
+	@Mapping(source = "shared", target = "shared")
+	@Mapping(source = "books", target = "books")
+	ShelfGetDTO convertShelfEntityToGetDTO(Shelf shelf);
+
+	List<ShelfGetDTO> convertShelfEntitiesToGetDTOs(List<Shelf> shelves);
+
 }
