@@ -1,5 +1,10 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
+import ch.uzh.ifi.hase.soprafs26.SecurityConfig;
+import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
@@ -44,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * This tests if the UserController works.
  */
 @WebMvcTest(UserController.class)
+@Import(SecurityConfig.class)
 public class UserControllerTest {
 
 	@Autowired
@@ -55,7 +61,12 @@ public class UserControllerTest {
 	@MockitoBean
 	private LeaderboardService leaderboardService;
 
+    @MockitoBean
+    @Qualifier("userRepository")
+    private UserRepository userRepository;
+
 	@Test
+    @WithMockUser
 	public void givenUsers_whenGetUsers_thenReturnJsonArray() throws Exception {
 		// given
 		User user = new User();
@@ -110,7 +121,53 @@ public class UserControllerTest {
 				.andExpect(jsonPath("$.status", is(user.getStatus().toString())));
 	}
 
-	@Test
+    @Test
+    @WithMockUser
+    public void getUser_validId_returnsUser() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testUsername");
+        user.setStatus(UserStatus.ONLINE);
+
+        given(userService.getUser(1L)).willReturn(user);
+
+        MockHttpServletRequestBuilder getRequest = get("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(getRequest)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(user.getId().intValue())))
+                .andExpect(jsonPath("$.username", is(user.getUsername())))
+                .andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+    }
+
+    @Test
+    public void getUser_invalidAuthentication_returns401() throws Exception {
+        MockHttpServletRequestBuilder getRequest = get("/users/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(getRequest)
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    public void getUser_invalidId_returns404() throws Exception {
+        given(userService.getUser(99L))
+                .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        MockHttpServletRequestBuilder getRequest = get("/users/99")
+                .contentType(MediaType.APPLICATION_JSON)
+                .accept(MediaType.APPLICATION_JSON);
+
+        mockMvc.perform(getRequest)
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
 	public void getUserStats_validId_ReturnOK() throws Exception {
 		Long userId = 1L;
 
@@ -151,6 +208,7 @@ public class UserControllerTest {
 	}
 
 	@Test
+    @WithMockUser
 	public void getTopUsers_ReturnOK() throws Exception {
 		//mocking 5 users
 		List <Leaderboard> mockLeaderboards = new ArrayList<>();
