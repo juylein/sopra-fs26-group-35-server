@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.SecurityConfig;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPostDTO;
 import ch.uzh.ifi.hase.soprafs26.service.LibraryService;
@@ -9,6 +10,7 @@ import ch.uzh.ifi.hase.soprafs26.service.LibraryService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
@@ -40,6 +42,10 @@ public class LibraryControllerTest {
 
     @MockitoBean
     private LibraryService libraryService;
+
+    @MockitoBean
+    @Qualifier("userRepository")
+    private UserRepository userRepository;
 
     private String asJsonString(final Object object) {
         try {
