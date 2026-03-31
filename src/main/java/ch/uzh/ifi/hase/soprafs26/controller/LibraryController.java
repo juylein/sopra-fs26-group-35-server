@@ -35,7 +35,7 @@ public class LibraryController {
         this.userRepository = userRepository;
     }
 
-    @GetMapping
+    @GetMapping("/shelves")
     @ResponseStatus(HttpStatus.OK)
     public List<ShelfGetDTO> getLibrary(
             @PathVariable Long userId,

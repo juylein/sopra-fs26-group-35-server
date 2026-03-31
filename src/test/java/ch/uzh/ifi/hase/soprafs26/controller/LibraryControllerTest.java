@@ -81,7 +81,7 @@ public class LibraryControllerTest {
         given(userRepository.findByToken("valid-token")).willReturn(user);
         given(libraryService.getLibrary(user)).willReturn(List.of(shelf));
 
-        MockHttpServletRequestBuilder getRequest = get("/users/1/library")
+        MockHttpServletRequestBuilder getRequest = get("/users/1/library/shelves")
                 .header("Authorization", "valid-token")
                 .contentType(MediaType.APPLICATION_JSON);
 
@@ -94,7 +94,7 @@ public class LibraryControllerTest {
 
     @Test
     public void getLibrary_invalidAuthentication_returns401() throws Exception {
-        MockHttpServletRequestBuilder getRequest = get("/users/1/library")
+        MockHttpServletRequestBuilder getRequest = get("/users/1/library/shelves")
                 .contentType(MediaType.APPLICATION_JSON);
 
         mockMvc.perform(getRequest)
@@ -106,7 +106,7 @@ public class LibraryControllerTest {
     public void getLibrary_invalidToken_returns401() throws Exception {
         given(userRepository.findByToken("invalid-token")).willReturn(null);
 
-        MockHttpServletRequestBuilder getRequest = get("/users/1/library")
+        MockHttpServletRequestBuilder getRequest = get("/users/1/library/shelves")
                 .header("Authorization", "invalid-token")
                 .contentType(MediaType.APPLICATION_JSON);
 
@@ -120,7 +120,7 @@ public class LibraryControllerTest {
         User user = mockUser(1L, "valid-token");
         given(userRepository.findByToken("valid-token")).willReturn(user);
 
-        MockHttpServletRequestBuilder getRequest = get("/users/99/library")
+        MockHttpServletRequestBuilder getRequest = get("/users/99/library/shelves")
                 .header("Authorization", "valid-token")
                 .contentType(MediaType.APPLICATION_JSON);
 
