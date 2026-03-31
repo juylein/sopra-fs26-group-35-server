@@ -33,7 +33,7 @@ public class Activities implements Serializable {
 	@JoinColumn(name = "user_id")
 	private User user; 
 
-	@OneToOne(mappedBy = "book_id")
+	@OneToOne(mappedBy = "activities")
 	private Book book;
 
 	@Column(nullable = false)

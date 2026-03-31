@@ -2,10 +2,14 @@ package ch.uzh.ifi.hase.soprafs26.service;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
-import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
-import java.util.List;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
+
+
+import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
+import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
+
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,18 +18,32 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
+
+import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
+
+import java.util.List;
+
 @Service
 @Transactional
 public class LibraryService {
 
     private final ShelfRepository shelfRepository;
     private final BookRepository bookRepository;
+    private final ShelfBookRepository shelfbookRepository;
+    private final ActivitiesService activitiesService;
 
     @Autowired
     public LibraryService(ShelfRepository shelfRepository,
-                          BookRepository bookRepository) {
+                          BookRepository bookRepository,
+                          ShelfBookRepository shelfbookRepository,
+                          ActivitiesService activitiesService
+                        
+                        ) {
         this.shelfRepository = shelfRepository;
         this.bookRepository = bookRepository;
+        this.shelfbookRepository = shelfbookRepository;
+        this.activitiesService = activitiesService;
     }
 
     public Shelf addShelf(User user, String name) {
@@ -61,7 +79,33 @@ public class LibraryService {
             return bookRepository.save(b);
         });
 
+        // Prevent duplicate ShelfBook entries
+        boolean alreadyOnShelf = shelf.getShelfBooks().stream()
+                .anyMatch(sb -> sb.getBook().getId().equals(book.getId()));
+
+        if (alreadyOnShelf) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Book already on this shelf");
+        }
+
         shelf.addBook(book);
         return shelfRepository.save(shelf);
+    }
+
+    public ShelfBook updateBookStatus(Long shelfId, String bookId, BookStatus newStatus){
+        Shelf shelf = shelfRepository.findById(shelfId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+        
+        ShelfBook shelfBook = shelfbookRepository.findByShelfIdAndBookId(shelfId, bookId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found on this shelf"));
+
+        shelfBook.setStatus(newStatus);
+
+        User user = shelf.getOwner();
+        Book book = shelfBook.getBook();
+
+        shelfbookRepository.save(shelfBook);
+        activitiesService.addActivity(user, newStatus, book);
+
+        return shelfBook;
     }
 }

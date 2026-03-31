@@ -1,11 +1,18 @@
 package ch.uzh.ifi.hase.soprafs26.service;
 
+import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
+
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+
 import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
+import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
+
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -34,10 +41,18 @@ public class LibraryServiceTest {
     @Mock
     private BookRepository bookRepository;
 
+    @Mock
+    private ShelfBookRepository shelfBookRepository;
+
+    @Mock ActivitiesService activitiesService;
+
     @InjectMocks
     private LibraryService libraryService;
 
     private User testUser;
+    private Shelf shelf;
+    private Book book;
+    private ShelfBook shelfBook;
 
     @BeforeEach
     public void setup() {
@@ -46,6 +61,18 @@ public class LibraryServiceTest {
         testUser.setUsername("testUser");
         testUser.setToken("valid-token");
         testUser.setStatus(UserStatus.ONLINE);
+
+        book = new Book();
+        book.setId("google_test_id");
+
+        shelf = new Shelf();
+        shelf.setId(1L);
+        shelf.setOwner(testUser);
+
+        shelfBook = new ShelfBook();
+        shelfBook.setShelf(shelf);
+        shelfBook.setBook(book);
+        shelfBook.setStatus(BookStatus.READING);
     }
 
     @Test
@@ -126,5 +153,65 @@ public class LibraryServiceTest {
                 () -> libraryService.addBookToShelf(testUser, 1L, new BookPostDTO()));
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    }
+
+    @Test
+    public void updateBookStatus_validInput_StatusUpdated(){
+        //given
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(shelfBookRepository.findByShelfIdAndBookId(1L, "google_test_id"))
+                .willReturn(Optional.of(shelfBook));
+
+        //when
+        ShelfBook result = libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED);
+
+        // then
+        assertEquals(BookStatus.FINISHED, result.getStatus());
+        verify(shelfBookRepository, times(1)).save(shelfBook);
+        verify(activitiesService, times(1)).addActivity(testUser, BookStatus.FINISHED, book);
+    }
+
+    @Test
+    public void updateBookStatus_shelfNotFound_throwsNotFound() {
+        // given
+        given(shelfRepository.findById(99L)).willReturn(Optional.empty());
+
+        // when/then
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+                libraryService.updateBookStatus(99L, "google_test_id", BookStatus.FINISHED));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        verify(shelfBookRepository, never()).save(any());
+        verify(activitiesService, never()).addActivity(any(), any(), any());
+    }
+
+    @Test
+    public void updateBookStatus_bookNotOnShelf_throwsNotFound() {
+        // given
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(shelfBookRepository.findByShelfIdAndBookId(1L, "google_test_id"))
+                .willReturn(Optional.empty());
+
+        // when/then
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class, () ->
+                libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        verify(shelfBookRepository, never()).save(any());
+        verify(activitiesService, never()).addActivity(any(), any(), any());
+    }
+
+    @Test
+    public void updateBookStatus_activityLogged_afterStatusChange() {
+        // given
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(shelfBookRepository.findByShelfIdAndBookId(1L, "google-book-id"))
+                .willReturn(Optional.of(shelfBook));
+
+        // when
+        libraryService.updateBookStatus(1L, "google-book-id", BookStatus.FINISHED);
+
+        // then — verify activity is logged with the correct arguments
+        verify(activitiesService, times(1)).addActivity(testUser, BookStatus.FINISHED, book);
     }
 }

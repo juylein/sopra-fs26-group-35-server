@@ -20,8 +20,8 @@ import java.io.Serializable;
  * the primary key
  */
 @Entity
-@Table(name = "activities")
-public class Activities implements Serializable {
+@Table(name = "reviews")
+public class Reviews implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
@@ -33,7 +33,8 @@ public class Activities implements Serializable {
 	@JoinColumn(name = "user_id")
 	private User user; 
 
-	@OneToOne(mappedBy = "book_id")
+	@ManyToOne
+	@JoinColumn(name = "book_id")
 	private Book book;
 
 	@Column(nullable = false)

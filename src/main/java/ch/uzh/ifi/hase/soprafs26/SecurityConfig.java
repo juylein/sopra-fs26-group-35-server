@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs26;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import ch.uzh.ifi.hase.soprafs26.AuthTokenFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 
 import java.io.Serializable;
 import java.util.Set;
@@ -37,13 +38,8 @@ public class Shelf implements Serializable {
 	@Column(nullable = false)
 	private String name;
 
-	@ManyToMany//shelves can have many books and one book can be in different shelves
-	@JoinTable(
-		name = "shelf_books",
-		joinColumns = @JoinColumn(name = "shelf_id"),
-		inverseJoinColumns = @JoinColumn(name = "book_id")
-	)
-	private Set<Book> books = new HashSet<>();
+	@OneToMany(mappedBy = "shelf", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<ShelfBook> shelfBooks = new HashSet<>();
 
 	@ManyToOne //single-owner shelves
 	@JoinColumn(name = "owner_id")
@@ -87,13 +83,19 @@ public class Shelf implements Serializable {
 		this.owner = owner;
 	}
 
-	public Set <Book> getBooks(){
-		return books;
+	public Set<ShelfBook> getBooks(){
+		return shelfBooks;
 	}
 
 	public void addBook(Book book){
-		books.add(book);
-		book.getShelves().add(this);
+		ShelfBook shelfBook = new ShelfBook();
+		shelfBook.setShelf(this);
+		shelfBook.setBook(book);
+		shelfBooks.add(shelfBook);
+	}
+
+	public Set<ShelfBook> getShelfBooks() {
+    return shelfBooks;
 	}
 
 }

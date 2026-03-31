@@ -6,6 +6,7 @@ import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.entity.Friendships;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
@@ -136,6 +137,14 @@ public class User implements Serializable {
   	public void setGenres(List<String> genres) { 
 		this.genres = genres; 
 	}
+
+	public LocalDateTime getCreationDate(){
+		return creationDate;
+	}
+
+	public void setCreationDate(LocalDateTime creationDate){
+		this.creationDate = creationDate;
+	}
 	
 	public Set<User> getFriends(){
 		Set <User> friends = new HashSet<>();
@@ -172,11 +181,14 @@ public class User implements Serializable {
 	}	
 	public Long getBooksRead(){
 		Shelf readShelf = getReadShelf();
-		return readShelf == null ? 0L: readShelf.getBooks().size();
+		return readShelf == null ? 0L: (long) readShelf.getShelfBooks().size();
 	}	
 	public Long getPagesRead() {
-		Shelf readShelf = getReadShelf();
-		return readShelf == null ? 0L: readShelf.getBooks().stream().mapToLong(Book::getPages).sum();
-	}
+    Shelf readShelf = getReadShelf();
+    return readShelf == null ? 0L : readShelf.getShelfBooks().stream()
+            .map(ShelfBook::getBook)
+            .mapToLong(Book::getPages)
+            .sum();
+}
 
 }

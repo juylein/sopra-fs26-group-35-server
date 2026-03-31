@@ -1,6 +1,6 @@
  package ch.uzh.ifi.hase.soprafs26.rest.dto;
 
- import java.util.List;
+import java.util.List;
 
  public class BookGetDTO {
      private String id;

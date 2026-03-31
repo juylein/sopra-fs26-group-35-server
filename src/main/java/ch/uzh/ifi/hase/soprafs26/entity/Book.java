@@ -2,7 +2,10 @@ package ch.uzh.ifi.hase.soprafs26.entity;
 
 import jakarta.persistence.*;
 
-import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
+import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
@@ -49,11 +52,15 @@ public class Book implements Serializable {
 	@Column(nullable = true, length = 2000)
 	private String description;
 
-	@Column(nullable = true)
-	private Long status_page_num;
+	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<ShelfBook> shelves = new HashSet<>();
 
-	@ManyToMany(mappedBy = "books")
-	private Set<Shelf> shelves = new HashSet<>();
+	@OneToOne
+	@JoinColumn(name = "activities_id")
+	private Activities activities;
+
+	@OneToMany(mappedBy = "book")
+	private Set<Reviews> reviews;
 
 	public String getId() {
 		return googleId;
@@ -105,15 +112,7 @@ public class Book implements Serializable {
 		this.description = description;
 	}
 
-	public Long getStatusPageNum(){
-		return status_page_num;
-	}
-
-	public void setStatusPageNum(Long status_page_num){
-		this.status_page_num = status_page_num;
-	}
-
-	public Set<Shelf> getShelves(){
+	public Set<ShelfBook> getShelves(){
 		return shelves;
 	}
 
