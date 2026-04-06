@@ -6,6 +6,7 @@ import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.entity.Friendships;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.io.Serializable;
@@ -113,18 +114,38 @@ public class User implements Serializable {
 		this.status = status;
 	}
 
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
+  	public String getBio() { 
+		return bio; 
+	}
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+  	public void setBio(String bio) { 
+		this.bio = bio; 
+	}
 
-    public List<String> getGenres() { return genres; }
-    public void setGenres(List<String> genres) { this.genres = genres; }
+  	public String getPassword() { 
+		return password; 
+	}
 
-    public LocalDateTime getCreationDate() { return creationDate; }
-    public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
+  	public void setPassword(String password) { 
+		this.password = password; 
+	}
 
+  	public List<String> getGenres() { 
+		return genres; 
+	}
+
+  	public void setGenres(List<String> genres) { 
+		this.genres = genres; 
+	}
+
+	public LocalDateTime getCreationDate(){
+		return creationDate;
+	}
+
+	public void setCreationDate(LocalDateTime creationDate){
+		this.creationDate = creationDate;
+	}
+	
 	public Set<User> getFriends(){
 		Set <User> friends = new HashSet<>();
 		for (Friendships f: friendshipsInitiated){
@@ -134,21 +155,17 @@ public class User implements Serializable {
 			friends.add(f.getUserA());
 		}
 		return friends;
-	}
-
+	}	
 	public Leaderboard getLeaderboard(){
 		return leaderboard;
-	}
-
+	}	
 	public void setLeaderboard(Leaderboard leaderboard){
 		this.leaderboard = leaderboard;
-	}
-
+	}	
 	//counting friends
 	public Long getNumFriends(){
 		return (long) getFriends().size();
-	}
-
+	}	
 	//counting read books and pages
 	//helper method to get the "read" shelf
 	public Shelf getReadShelf(){
@@ -158,20 +175,20 @@ public class User implements Serializable {
 		)
 		.findFirst()
 		.orElse(null);
-	}
-
+	}	
 	public List<Shelf> getShelves() {
-     	return shelves;
- 	}
-
+	 	return shelves;
+	}	
 	public Long getBooksRead(){
 		Shelf readShelf = getReadShelf();
-		return readShelf == null ? 0L: readShelf.getBooks().size();
-	}
-
+		return readShelf == null ? 0L: (long) readShelf.getShelfBooks().size();
+	}	
 	public Long getPagesRead() {
-		Shelf readShelf = getReadShelf();
-		return readShelf == null ? 0L: readShelf.getBooks().stream().mapToLong(Book::getPages).sum();
-	}
+    Shelf readShelf = getReadShelf();
+    return readShelf == null ? 0L : readShelf.getShelfBooks().stream()
+            .map(ShelfBook::getBook)
+            .mapToLong(Book::getPages)
+            .sum();
+}
 
 }

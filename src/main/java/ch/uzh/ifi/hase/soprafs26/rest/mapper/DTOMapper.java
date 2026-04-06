@@ -4,10 +4,15 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookPutDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserGetDTO;
@@ -67,12 +72,19 @@ public interface DTOMapper {
 	@Mapping(source = "description", target = "description")
 	BookGetDTO convertBookEntityToGetDTO(Book book);
 
+	@Mapping(source = "status", target = "status")
+	ShelfBookPutDTO convertShelfBookEntityToPutDTO(ShelfBook ShelfBook);
+
 	@Mapping(source = "id", target = "id")
 	@Mapping(source = "name", target = "name")
 	@Mapping(source = "shared", target = "shared")
 	@Mapping(source = "books", target = "books")
 	ShelfGetDTO convertShelfEntityToGetDTO(Shelf shelf);
-
 	List<ShelfGetDTO> convertShelfEntitiesToGetDTOs(List<Shelf> shelves);
 
+	@Mapping(source = "id", target = "id")
+	@Mapping(source = "user.username", target = "username")
+	@Mapping(source = "book.name", target = "book")
+	@Mapping(source = "actions", target = "actions")
+	ActivitiesGetDTO convertActivitiesEntityToGetDTO(Activities activities);
 }

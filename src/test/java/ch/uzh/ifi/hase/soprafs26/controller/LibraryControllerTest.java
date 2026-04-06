@@ -1,10 +1,19 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.SecurityConfig;
+
+import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
+import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
+
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
+
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPostDTO;
+
 import ch.uzh.ifi.hase.soprafs26.service.LibraryService;
 
 import org.junit.jupiter.api.Test;
@@ -23,6 +32,7 @@ import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
+import java.beans.Transient;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -30,6 +40,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -232,5 +243,36 @@ public class LibraryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(new BookPostDTO())))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser
+    public void updateBookStatus_validInput_returnsNoContent() throws Exception {
+        // given
+        ShelfBook shelfBook = new ShelfBook();
+        shelfBook.setStatus(BookStatus.FINISHED);
+
+        given(libraryService.updateBookStatus(1L, "google-test-id", BookStatus.FINISHED))
+                .willReturn(shelfBook);
+
+        // when/then
+        mockMvc.perform(put("/users/1/library/shelves/1/books/2")
+                        .param("status", "FINISHED")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    @WithMockUser
+    public void updateBookStatus_shelfNotFound_returnsNotFound() throws Exception {
+        // given
+        given(libraryService.updateBookStatus(99L, "2", BookStatus.FINISHED))
+        .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+
+        // when/then
+        mockMvc.perform(put("/users/1/library/shelves/99/books/2")
+                        .param("status", "FINISHED")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
     }
 }

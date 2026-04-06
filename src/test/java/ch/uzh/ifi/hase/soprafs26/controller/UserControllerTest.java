@@ -1,12 +1,21 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
+import ch.uzh.ifi.hase.soprafs26.AuthTokenFilter;
 import ch.uzh.ifi.hase.soprafs26.SecurityConfig;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import org.junit.jupiter.api.BeforeEach;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 
 
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
@@ -14,6 +23,7 @@ import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
+import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
 import ch.uzh.ifi.hase.soprafs26.service.UserService;
 import ch.uzh.ifi.hase.soprafs26.service.LeaderboardService;
 
@@ -61,9 +71,24 @@ public class UserControllerTest {
 	@MockitoBean
 	private LeaderboardService leaderboardService;
 
+	@MockitoBean
+	private ActivitiesService activitiesService;
+
     @MockitoBean
     @Qualifier("userRepository")
     private UserRepository userRepository;
+
+    @MockitoBean
+    private AuthTokenFilter authTokenFilter;
+
+    @BeforeEach
+    void setUpFilter() throws Exception {
+        doAnswer(invocation -> {
+            ((FilterChain) invocation.getArgument(2))
+                    .doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(authTokenFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
+    }
 
 	@Test
     @WithMockUser

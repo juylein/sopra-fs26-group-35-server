@@ -44,15 +44,35 @@ public class UserGetDTO {
 		this.status = status;
 	}
 
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
+    public String getBio() { 
+		return bio; 
+	}
 
-    public String getToken() { return token; }
-    public void setToken(String token) { this.token = token; }
+    public void setBio(String bio) { 
+		this.bio = bio; 
+	}
 
-    public List<String> getGenres() { return genres; }
-    public void setGenres(List<String> genres) { this.genres = genres; }
+    public String getToken() { 
+		return token; 
+	}
 
-    public LocalDateTime getCreationDate() { return creationDate; }
-    public void setCreationDate(LocalDateTime creationDate) { this.creationDate = creationDate; }
+    public void setToken(String token) { 
+		this.token = token; 
+	}
+
+    public List<String> getGenres() { 
+		return genres; 
+	}
+
+    public void setGenres(List<String> genres) { 
+		this.genres = genres; 
+	}
+
+    public LocalDateTime getCreationDate() { 
+		return creationDate; 
+	}
+
+    public void setCreationDate(LocalDateTime creationDate) { 
+		this.creationDate = creationDate; 
+	}
 }

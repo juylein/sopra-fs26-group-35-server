@@ -31,4 +31,5 @@ public class Session implements Serializable {
 	public void setId(Long id) {
 		this.id = id;
 	}
+
 }

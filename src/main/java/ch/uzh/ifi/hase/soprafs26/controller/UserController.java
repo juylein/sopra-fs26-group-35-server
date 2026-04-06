@@ -5,12 +5,18 @@ import org.springframework.web.bind.annotation.*;
 
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
+import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
+
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
+
 import ch.uzh.ifi.hase.soprafs26.service.UserService;
 import ch.uzh.ifi.hase.soprafs26.service.LeaderboardService;
+import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,10 +33,15 @@ public class UserController {
 
 	private final UserService userService;
 	private final LeaderboardService leaderboardService;
+	private final ActivitiesService activitiesService;
 
-	UserController(UserService userService, LeaderboardService leaderboardService) {
+	UserController(UserService userService, 
+				   LeaderboardService leaderboardService,
+				   ActivitiesService activitiesService
+				) {
 		this.userService = userService;
 		this.leaderboardService = leaderboardService;
+		this.activitiesService = activitiesService;
 	}
 
 	@GetMapping("/users")
@@ -70,10 +81,10 @@ public class UserController {
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(loggedInUser);
     }
 
-    @GetMapping("/users/{id}")
+    @GetMapping("/users/{userId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public UserGetDTO getUserById(@PathVariable("id") Long id) {
+    public UserGetDTO getUserById(@PathVariable("userId") Long id) {
         User user = userService.getUser(id);
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
     }
@@ -101,4 +112,31 @@ public class UserController {
 		return dtos;
 	}
 
+	@GetMapping("/users/{userId}/activities")
+	@ResponseStatus(HttpStatus.OK)
+	@ResponseBody
+	public List<ActivitiesGetDTO> getActivities(@PathVariable Long userId){
+		User user = userService.getUserById(userId);
+		List<Activities> activities = activitiesService.getAllActivities(user);
+		List<ActivitiesGetDTO> activitiesGetDTOs = new ArrayList<>();
+
+		for (Activities activity : activities){
+			activitiesGetDTOs.add(DTOMapper.INSTANCE.convertActivitiesEntityToGetDTO(activity));
+		}
+		return activitiesGetDTOs;
+	}
+
+	@GetMapping("/users/{userId}/activities/{friendId}")
+	@ResponseStatus(HttpStatus.OK)
+	@ResponseBody
+	public List<ActivitiesGetDTO> getActivitiesByFriend(@PathVariable Long friendId,@PathVariable Long userId){
+		User user = userService.getUserById(userId);
+		List<Activities> activities = activitiesService.getActivitiesByFriend(user, friendId);
+		List<ActivitiesGetDTO> activitiesGetDTOs = new ArrayList<>();
+
+		for (Activities activity : activities){
+			activitiesGetDTOs.add(DTOMapper.INSTANCE.convertActivitiesEntityToGetDTO(activity));
+		}
+		return activitiesGetDTOs;
+	}
 }
