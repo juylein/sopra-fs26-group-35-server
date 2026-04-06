@@ -27,7 +27,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.server.ResponseStatusException;
 
 import tools.jackson.core.JacksonException;
@@ -59,15 +58,6 @@ public class LibraryControllerTest {
     @Qualifier("userRepository")
     private UserRepository userRepository;
 
-    private User mockUser(Long id, String token) {
-        User user = new User();
-        user.setId(id);
-        user.setUsername("testUser");
-        user.setToken(token);
-        user.setStatus(UserStatus.ONLINE);
-        return user;
-    }
-
     private String asJsonString(final Object object) {
         try {
             return new ObjectMapper().writeValueAsString(object);
@@ -80,21 +70,16 @@ public class LibraryControllerTest {
     @Test
     @WithMockUser
     public void getLibrary_validToken_returnsLibrary() throws Exception {
-        User user = mockUser(1L, "valid-token");
-
         Shelf shelf = new Shelf();
         shelf.setId(1L);
         shelf.setName("To Read");
         shelf.setShared(false);
 
-        given(userRepository.findByToken("valid-token")).willReturn(user);
-        given(libraryService.getLibrary(user)).willReturn(List.of(shelf));
+        given(libraryService.getLibrary(1L)).willReturn(List.of(shelf));
 
-        MockHttpServletRequestBuilder getRequest = get("/users/1/library/shelves")
-                .header("Authorization", "valid-token")
-                .contentType(MediaType.APPLICATION_JSON);
-
-        mockMvc.perform(getRequest)
+        mockMvc.perform(get("/users/1/library/shelves")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].name", is("To Read")))
@@ -103,45 +88,38 @@ public class LibraryControllerTest {
 
     @Test
     public void getLibrary_invalidAuthentication_returns401() throws Exception {
-        MockHttpServletRequestBuilder getRequest = get("/users/1/library/shelves")
-                .contentType(MediaType.APPLICATION_JSON);
-
-        mockMvc.perform(getRequest)
+        mockMvc.perform(get("/users/1/library/shelves")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser
     public void getLibrary_invalidToken_returns401() throws Exception {
-        given(userRepository.findByToken("invalid-token")).willReturn(null);
+        given(libraryService.getLibrary(1L))
+                .willThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token"));
 
-        MockHttpServletRequestBuilder getRequest = get("/users/1/library/shelves")
-                .header("Authorization", "invalid-token")
-                .contentType(MediaType.APPLICATION_JSON);
-
-        mockMvc.perform(getRequest)
+        mockMvc.perform(get("/users/1/library/shelves")
+                        .header("Authorization", "invalid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser
     public void getLibrary_wrongUserId_returns403() throws Exception {
-        User user = mockUser(1L, "valid-token");
-        given(userRepository.findByToken("valid-token")).willReturn(user);
+        given(libraryService.getLibrary(99L))
+                .willThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
 
-        MockHttpServletRequestBuilder getRequest = get("/users/99/library/shelves")
-                .header("Authorization", "valid-token")
-                .contentType(MediaType.APPLICATION_JSON);
-
-        mockMvc.perform(getRequest)
+        mockMvc.perform(get("/users/99/library/shelves")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser
     public void addShelf_validInput_returnsCreated() throws Exception {
-        User user = mockUser(1L, "valid-token");
-
         Shelf shelf = new Shelf();
         shelf.setId(2L);
         shelf.setName("Favorites");
@@ -150,15 +128,12 @@ public class LibraryControllerTest {
         ShelfPostDTO shelfPostDTO = new ShelfPostDTO();
         shelfPostDTO.setName("Favorites");
 
-        given(userRepository.findByToken("valid-token")).willReturn(user);
-        given(libraryService.addShelf(user, "Favorites")).willReturn(shelf);
+        given(libraryService.addShelf(1L, "Favorites")).willReturn(shelf);
 
-        MockHttpServletRequestBuilder postRequest = post("/users/1/library/shelves")
-                .header("Authorization", "valid-token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(shelfPostDTO));
-
-        mockMvc.perform(postRequest)
+        mockMvc.perform(post("/users/1/library/shelves")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(shelfPostDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(2)))
                 .andExpect(jsonPath("$.name", is("Favorites")))
@@ -170,54 +145,47 @@ public class LibraryControllerTest {
         ShelfPostDTO shelfPostDTO = new ShelfPostDTO();
         shelfPostDTO.setName("Favorites");
 
-        MockHttpServletRequestBuilder postRequest = post("/users/1/library/shelves")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(shelfPostDTO));
-
-        mockMvc.perform(postRequest)
+        mockMvc.perform(post("/users/1/library/shelves")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(shelfPostDTO)))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser
     public void addShelf_invalidToken_returns401() throws Exception {
-        given(userRepository.findByToken("invalid-token")).willReturn(null);
+        given(libraryService.addShelf(1L, "Favorites"))
+                .willThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token"));
 
         ShelfPostDTO shelfPostDTO = new ShelfPostDTO();
         shelfPostDTO.setName("Favorites");
 
-        MockHttpServletRequestBuilder postRequest = post("/users/1/library/shelves")
-                .header("Authorization", "invalid-token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(shelfPostDTO));
-
-        mockMvc.perform(postRequest)
+        mockMvc.perform(post("/users/1/library/shelves")
+                        .header("Authorization", "invalid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(shelfPostDTO)))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser
     public void addShelf_wrongUserId_returns403() throws Exception {
-        User user = mockUser(1L, "valid-token");
-        given(userRepository.findByToken("valid-token")).willReturn(user);
+        given(libraryService.addShelf(99L, "Favorites"))
+                .willThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
 
         ShelfPostDTO shelfPostDTO = new ShelfPostDTO();
         shelfPostDTO.setName("Favorites");
 
-        MockHttpServletRequestBuilder postRequest = post("/users/99/library/shelves")
-                .header("Authorization", "valid-token")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(asJsonString(shelfPostDTO));
-
-        mockMvc.perform(postRequest)
+        mockMvc.perform(post("/users/99/library/shelves")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(shelfPostDTO)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser
     public void addBookToShelf_validInput_returnsCreated() throws Exception {
-        User user = mockUser(1L, "valid-token");
-
         BookPostDTO bookPostDTO = new BookPostDTO();
         bookPostDTO.setGoogleId("abc123");
         bookPostDTO.setName("Dune");
@@ -232,8 +200,7 @@ public class LibraryControllerTest {
         shelf.setName("My Shelf");
         shelf.setShared(false);
 
-        given(userRepository.findByToken("valid-token")).willReturn(user);
-        given(libraryService.addBookToShelf(Mockito.eq(user), Mockito.eq(1L), Mockito.any()))
+        given(libraryService.addBookToShelf(Mockito.eq(1L), Mockito.eq(1L), Mockito.any()))
                 .willReturn(shelf);
 
         mockMvc.perform(post("/users/1/library/shelves/1/books")
@@ -255,7 +222,8 @@ public class LibraryControllerTest {
     @Test
     @WithMockUser
     public void addBookToShelf_invalidToken_returns401() throws Exception {
-        given(userRepository.findByToken("bad-token")).willReturn(null);
+        given(libraryService.addBookToShelf(Mockito.eq(1L), Mockito.eq(1L), Mockito.any()))
+                .willThrow(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token"));
 
         mockMvc.perform(post("/users/1/library/shelves/1/books")
                         .header("Authorization", "bad-token")
@@ -267,8 +235,8 @@ public class LibraryControllerTest {
     @Test
     @WithMockUser
     public void addBookToShelf_wrongUser_returns403() throws Exception {
-        User user = mockUser(2L, "valid-token");
-        given(userRepository.findByToken("valid-token")).willReturn(user);
+        given(libraryService.addBookToShelf(Mockito.eq(1L), Mockito.eq(1L), Mockito.any()))
+                .willThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
 
         mockMvc.perform(post("/users/1/library/shelves/1/books")
                         .header("Authorization", "valid-token")

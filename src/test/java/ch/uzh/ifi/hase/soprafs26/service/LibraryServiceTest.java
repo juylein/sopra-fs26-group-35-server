@@ -13,8 +13,10 @@ import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
 
+import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,8 +24,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +50,7 @@ public class LibraryServiceTest {
     private ShelfBookRepository shelfBookRepository;
 
     @Mock ActivitiesService activitiesService;
+    private UserRepository userRepository;
 
     @InjectMocks
     private LibraryService libraryService;
@@ -73,6 +79,65 @@ public class LibraryServiceTest {
         shelfBook.setShelf(shelf);
         shelfBook.setBook(book);
         shelfBook.setStatus(BookStatus.READING);
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken("testUser", "valid-token", Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(auth);
+    }
+
+    @AfterEach
+    public void teardown() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @Test
+    public void getLibrary_validUser_returnsShelves() {
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+
+        List<Shelf> result = libraryService.getLibrary(1L);
+
+        assertEquals(testUser.getShelves(), result);
+    }
+
+    @Test
+    public void getLibrary_userNotFound_throws404() {
+        given(userRepository.findById(99L)).willReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> libraryService.getLibrary(99L));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    }
+
+    @Test
+    public void getLibrary_wrongToken_throws403() {
+        UsernamePasswordAuthenticationToken wrongAuth =
+                new UsernamePasswordAuthenticationToken("testUser", "wrong-token", Collections.emptyList());
+        SecurityContextHolder.getContext().setAuthentication(wrongAuth);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> libraryService.getLibrary(1L));
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+    }
+
+    @Test
+    public void addShelf_validInput_createsShelf() {
+        Shelf savedShelf = new Shelf();
+        savedShelf.setName("Favorites");
+        savedShelf.setOwner(testUser);
+        savedShelf.setShared(false);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.save(any(Shelf.class))).willReturn(savedShelf);
+
+        Shelf result = libraryService.addShelf(1L, "Favorites");
+
+        assertNotNull(result);
+        assertEquals("Favorites", result.getName());
+        assertEquals(testUser, result.getOwner());
+        verify(shelfRepository, times(1)).save(any(Shelf.class));
     }
 
     @Test
@@ -94,12 +159,13 @@ public class LibraryServiceTest {
         newBook.setId("abc123");
         newBook.setName("Dune");
 
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
         given(bookRepository.findById("abc123")).willReturn(Optional.empty());
         given(bookRepository.save(any(Book.class))).willReturn(newBook);
         given(shelfRepository.save(shelf)).willReturn(shelf);
 
-        Shelf result = libraryService.addBookToShelf(testUser, 1L, dto);
+        Shelf result = libraryService.addBookToShelf(1L, 1L, dto);
 
         assertNotNull(result);
         verify(bookRepository, times(1)).save(any(Book.class));
@@ -118,22 +184,24 @@ public class LibraryServiceTest {
         Book existingBook = new Book();
         existingBook.setId("abc123");
 
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
         given(bookRepository.findById("abc123")).willReturn(Optional.of(existingBook));
         given(shelfRepository.save(shelf)).willReturn(shelf);
 
-        libraryService.addBookToShelf(testUser, 1L, dto);
+        libraryService.addBookToShelf(1L, 1L, dto);
 
-        verify(bookRepository, never()).save(any(Book.class)); // existing book, no new save
+        verify(bookRepository, never()).save(any(Book.class));
         verify(shelfRepository, times(1)).save(shelf);
     }
 
     @Test
     public void addBookToShelf_shelfNotFound_throws404() {
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(shelfRepository.findById(99L)).willReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.addBookToShelf(testUser, 99L, new BookPostDTO()));
+                () -> libraryService.addBookToShelf(1L, 99L, new BookPostDTO()));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     }
@@ -145,12 +213,13 @@ public class LibraryServiceTest {
 
         Shelf shelf = new Shelf();
         shelf.setId(1L);
-        shelf.setOwner(otherUser); // different owner
+        shelf.setOwner(otherUser);
 
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.addBookToShelf(testUser, 1L, new BookPostDTO()));
+                () -> libraryService.addBookToShelf(1L, 1L, new BookPostDTO()));
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
     }
