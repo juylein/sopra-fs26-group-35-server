@@ -9,9 +9,11 @@ import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+import ch.uzh.ifi.hase.soprafs26.entity.Session;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookPutDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
@@ -87,4 +89,8 @@ public interface DTOMapper {
 	@Mapping(source = "book.name", target = "book")
 	@Mapping(source = "actions", target = "actions")
 	ActivitiesGetDTO convertActivitiesEntityToGetDTO(Activities activities);
+
+	@Mapping(source = "host.id", target = "hostId")
+	@Mapping(source = "book.id", target = "bookId")
+	SessionGetDTO convertSessionEntityToGetDTO(Session session);
 }
