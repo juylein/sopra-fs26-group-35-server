@@ -117,15 +117,11 @@ public class User implements Serializable {
   	public String getBio() { 
 		return bio; 
 	}
-
   	public void setBio(String bio) { 
 		this.bio = bio; 
 	}
 
-  	public String getPassword() { 
-		return password; 
-	}
-
+  	public String getPassword() { return password; }
   	public void setPassword(String password) { 
 		this.password = password; 
 	}
@@ -133,7 +129,6 @@ public class User implements Serializable {
   	public List<String> getGenres() { 
 		return genres; 
 	}
-
   	public void setGenres(List<String> genres) { 
 		this.genres = genres; 
 	}
@@ -141,7 +136,6 @@ public class User implements Serializable {
 	public LocalDateTime getCreationDate(){
 		return creationDate;
 	}
-
 	public void setCreationDate(LocalDateTime creationDate){
 		this.creationDate = creationDate;
 	}
@@ -155,39 +149,43 @@ public class User implements Serializable {
 			friends.add(f.getUserA());
 		}
 		return friends;
-	}	
+	}
+    public Long getNumFriends(){
+        return (long) getFriends().size();
+    }	//counting friends
+
 	public Leaderboard getLeaderboard(){
 		return leaderboard;
 	}	
 	public void setLeaderboard(Leaderboard leaderboard){
 		this.leaderboard = leaderboard;
-	}	
-	//counting friends
-	public Long getNumFriends(){
-		return (long) getFriends().size();
-	}	
-	//counting read books and pages
+	}
+
+    //counting read books and pages
 	//helper method to get the "read" shelf
 	public Shelf getReadShelf(){
 		return shelves.stream()
 		.filter(
-			s -> !s.getShared() && "read".equals(s.getName())
+			s -> !s.getShared() && "read".equalsIgnoreCase(s.getName())
 		)
 		.findFirst()
 		.orElse(null);
-	}	
+	}
+
 	public List<Shelf> getShelves() {
 	 	return shelves;
-	}	
+	}
+
 	public Long getBooksRead(){
 		Shelf readShelf = getReadShelf();
-		return readShelf == null ? 0L: (long) readShelf.getShelfBooks().size();
-	}	
+		return readShelf == null ? 0L: (long) readShelf.getBooks().size();
+	}
+
 	public Long getPagesRead() {
     Shelf readShelf = getReadShelf();
-    return readShelf == null ? 0L : readShelf.getShelfBooks().stream()
+    return readShelf == null ? 0L : readShelf.getBooks().stream()
             .map(ShelfBook::getBook)
-            .mapToLong(Book::getPages)
+            .mapToLong(b -> b.getPages() != null ? b.getPages() : 0L)
             .sum();
 }
 
