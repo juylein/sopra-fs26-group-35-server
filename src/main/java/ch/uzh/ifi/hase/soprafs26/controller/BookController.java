@@ -21,6 +21,8 @@ public class BookController {
     @ResponseBody
     public BookGetDTO getBook(@PathVariable String bookId) {
         Book book = bookService.getBook(bookId);
-        return DTOMapper.INSTANCE.convertBookEntityToGetDTO(book);
+        BookGetDTO dto = DTOMapper.INSTANCE.convertBookEntityToGetDTO(book);
+        dto.setAverageRating(bookService.getAverageRating(book));
+        return dto;
     }
 }

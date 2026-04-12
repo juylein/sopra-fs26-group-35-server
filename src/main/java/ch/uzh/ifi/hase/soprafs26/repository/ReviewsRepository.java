@@ -7,8 +7,11 @@ import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
 
+import java.util.List;
+
+
 @Repository("reviewsRepository")
 public interface ReviewsRepository extends JpaRepository<Reviews, Long> {
-	Reviews findByUser(User user);
-	Reviews findByBook(Book book);
+	List<Reviews> findByUser(User user);
+	List<Reviews> findByBook(Book book);
 }
