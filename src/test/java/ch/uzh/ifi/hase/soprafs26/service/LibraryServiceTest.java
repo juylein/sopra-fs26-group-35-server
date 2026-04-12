@@ -49,7 +49,10 @@ public class LibraryServiceTest {
     @Mock
     private ShelfBookRepository shelfBookRepository;
 
-    @Mock ActivitiesService activitiesService;
+    @Mock
+    private ActivitiesService activitiesService;
+
+    @Mock
     private UserRepository userRepository;
 
     @InjectMocks
@@ -274,11 +277,11 @@ public class LibraryServiceTest {
     public void updateBookStatus_activityLogged_afterStatusChange() {
         // given
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
-        given(shelfBookRepository.findByShelfIdAndBookId(1L, "google-book-id"))
+        given(shelfBookRepository.findByShelfIdAndBookId(1L, "google_test_id"))
                 .willReturn(Optional.of(shelfBook));
 
         // when
-        libraryService.updateBookStatus(1L, "google-book-id", BookStatus.FINISHED);
+        libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED);
 
         // then — verify activity is logged with the correct arguments
         verify(activitiesService, times(1)).addActivity(testUser, BookStatus.FINISHED, book);

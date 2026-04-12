@@ -105,7 +105,7 @@ public class LibraryService {
         });
 
         // Prevent duplicate ShelfBook entries
-        boolean alreadyOnShelf = shelf.getShelfBooks().stream()
+        boolean alreadyOnShelf = shelf.getBooks().stream()
                 .anyMatch(sb -> sb.getBook().getId().equals(book.getId()));
 
         if (alreadyOnShelf) {
@@ -119,13 +119,35 @@ public class LibraryService {
     public ShelfBook updateBookStatus(Long shelfId, String bookId, BookStatus newStatus){
         Shelf shelf = shelfRepository.findById(shelfId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+
+        String currentToken = (String) SecurityContextHolder.getContext()
+                .getAuthentication().getCredentials();
+
+        boolean isAuthorized;
+
+        if (shelf.getShared()) { // Shared shelf -> check if the requester is one of the members
+            isAuthorized = shelf.getUsers().stream()
+                    .anyMatch(u -> u.getToken().equals(currentToken));
+        } else { // Private shelf -> check if the requester is the owner
+            isAuthorized = shelf.getOwner().getToken().equals(currentToken);
+        }
+
+        if (!isAuthorized) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
         
         ShelfBook shelfBook = shelfbookRepository.findByShelfIdAndBookId(shelfId, bookId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found on this shelf"));
 
         shelfBook.setStatus(newStatus);
 
-        User user = shelf.getOwner();
+        User user = shelf.getShared() //Find the right user for the activity log
+                ? shelf.getUsers().stream()
+                .filter(u -> u.getToken().equals(currentToken))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"))
+                : shelf.getOwner(); // Private shelf -> just use the owner directly
+
         Book book = shelfBook.getBook();
 
         shelfbookRepository.save(shelfBook);

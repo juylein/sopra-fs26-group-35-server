@@ -54,7 +54,6 @@ public class Shelf implements Serializable {
 	public Long getId() {
 		return id;
 	}
-
 	public void setId(Long id) {
 		this.id = id;
 	}
@@ -62,7 +61,6 @@ public class Shelf implements Serializable {
 	public String getName(){
 		return name;
 	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
@@ -70,7 +68,6 @@ public class Shelf implements Serializable {
 	public boolean getShared(){
 		return shared;
 	}
-
 	public void setShared(boolean shared){
 		this.shared = shared;
 	}
@@ -78,24 +75,21 @@ public class Shelf implements Serializable {
 	public User getOwner(){
 		return owner;
 	}
-
 	public void setOwner(User owner){
 		this.owner = owner;
 	}
 
+    public Set<User> getUsers() {
+        return users;
+    }
+
 	public Set<ShelfBook> getBooks(){
 		return shelfBooks;
 	}
-
 	public void addBook(Book book){
 		ShelfBook shelfBook = new ShelfBook();
 		shelfBook.setShelf(this);
 		shelfBook.setBook(book);
 		shelfBooks.add(shelfBook);
 	}
-
-	public Set<ShelfBook> getShelfBooks() {
-    return shelfBooks;
-	}
-
 }
