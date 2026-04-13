@@ -6,8 +6,11 @@ import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.entity.Session;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
+
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
 
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 
@@ -272,6 +275,117 @@ public class LibraryControllerTest {
         // when/then
         mockMvc.perform(put("/users/1/library/shelves/99/books/2")
                         .param("status", "FINISHED")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    // --- Session endpoint tests ---
+
+    @Test
+    @WithMockUser
+    public void createReadingSession_validInput_returnsCreated() throws Exception {
+        // given
+        Session session = new Session();
+        session.setId(10L);
+
+        SessionParticipantPostDTO dto = new SessionParticipantPostDTO();
+        dto.setShelfBookId(1L);
+
+        given(libraryService.createReadingSession(Mockito.any(), Mockito.any())).willReturn(session);
+
+        // when/then
+        mockMvc.perform(post("/users/1/library/sessions")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(List.of(dto))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id", is(10)));
+    }
+
+    @Test
+    public void createReadingSession_invalidAuthentication_returns401() throws Exception {
+        mockMvc.perform(post("/users/1/library/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(List.of())))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser
+    public void createReadingSession_userNotFound_returns404() throws Exception {
+        // given
+        given(libraryService.createReadingSession(Mockito.any(), Mockito.any()))
+                .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        SessionParticipantPostDTO dto = new SessionParticipantPostDTO();
+        dto.setShelfBookId(1L);
+
+        // when/then
+        mockMvc.perform(post("/users/1/library/sessions")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(List.of(dto))))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    public void startReadingSession_validInput_returnsOk() throws Exception {
+        // given
+        Session session = new Session();
+        session.setId(10L);
+
+        given(libraryService.startReadingSession(10L)).willReturn(session);
+
+        // when/then
+        mockMvc.perform(put("/users/1/library/sessions/10/started")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(10)));
+    }
+
+    @Test
+    @WithMockUser
+    public void startReadingSession_sessionNotFound_returns404() throws Exception {
+        // given
+        given(libraryService.startReadingSession(99L))
+                .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
+
+        // when/then
+        mockMvc.perform(put("/users/1/library/sessions/99/started")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    public void endReadingSession_validInput_returnsOk() throws Exception {
+        // given
+        Session session = new Session();
+        session.setId(10L);
+
+        given(libraryService.endReadingSession(10L)).willReturn(session);
+
+        // when/then
+        mockMvc.perform(put("/users/1/library/sessions/10/ended")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", is(10)));
+    }
+
+    @Test
+    @WithMockUser
+    public void endReadingSession_sessionNotFound_returns404() throws Exception {
+        // given
+        given(libraryService.endReadingSession(99L))
+                .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
+
+        // when/then
+        mockMvc.perform(put("/users/1/library/sessions/99/ended")
+                        .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
     }

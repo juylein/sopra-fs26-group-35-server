@@ -10,10 +10,12 @@ import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Activities;
 import ch.uzh.ifi.hase.soprafs26.entity.Session;
+import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookPutDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
@@ -102,5 +104,14 @@ public interface DTOMapper {
     @Mapping(source = "book.genre", target = "genre")
     @Mapping(source = "book.description", target = "description")
     BookGetDTO convertShelfBookToBookGetDTO(ShelfBook shelfBook);
+
+	@Mapping(source = "user.id", target = "userId")
+	@Mapping(source = "shelfBook.id", target = "shelfBookId")
+	SessionParticipantPostDTO convertSessionParticipantEntityToPostDTO(SessionParticipant sessionParticipant);
+
+	@Mapping(source = "id", target = "id")
+	@Mapping(source = "startTime", target = "startTime")
+	@Mapping(source = "endTime", target = "endTime")
+	SessionGetDTO convertSessionToGetDTO(Session session);
 
 }

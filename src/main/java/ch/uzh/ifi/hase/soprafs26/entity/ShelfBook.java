@@ -5,9 +5,6 @@ import jakarta.persistence.*;
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
 
 import java.io.Serializable;
 
@@ -74,5 +71,4 @@ public class ShelfBook implements Serializable {
 
 	public void setStatus(BookStatus status){
 		this.status = status;
-	}
-}
+	}}
