@@ -37,6 +37,9 @@ public class Reviews implements Serializable {
 	@JoinColumn(name = "book_id")
 	private Book book;
 
+	@Column(nullable = true)
+	private Integer rating;
+
 	@Column(nullable = false)
     private String review;
 
@@ -82,5 +85,9 @@ public class Reviews implements Serializable {
 	public void setReview(String review){
 		this.review = review;
 	}
+
+	public Integer getRating(){return rating;}
+
+	public void setRating(Integer rating){this.rating = rating;}
 
 }
