@@ -10,6 +10,7 @@ public class BookPostDTO {
     private Integer releaseYear;
     private String genre;
     private String description;
+    private String coverUrl;
 
     public String getGoogleId() { return googleId; }
     public void setGoogleId(String googleId) { this.googleId = googleId; }
@@ -31,4 +32,7 @@ public class BookPostDTO {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getCoverUrl() { return coverUrl; }
+    public void setCoverUrl(String coverUrl) { this.coverUrl = coverUrl; }
 }

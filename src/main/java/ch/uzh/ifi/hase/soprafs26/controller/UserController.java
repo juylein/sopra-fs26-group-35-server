@@ -81,6 +81,14 @@ public class UserController {
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(loggedInUser);
     }
 
+	@PutMapping("/users/{userId}/logout")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void logoutUser(@PathVariable("userId") Long userId)
+	{
+		userService.logoutUser(userId);
+	}
+
+
     @GetMapping("/users/{userId}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody

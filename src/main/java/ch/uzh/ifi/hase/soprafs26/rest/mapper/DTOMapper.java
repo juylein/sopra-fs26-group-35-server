@@ -73,6 +73,7 @@ public interface DTOMapper {
     @Mapping(source = "releaseYear", target = "releaseYear")
     @Mapping(source = "genre", target = "genre")
     @Mapping(source = "description", target = "description")
+    @Mapping(source = "coverUrl", target = "coverUrl")
     BookGetDTO convertBookEntityToGetDTO(Book book);
 
     @Mapping(source = "status", target = "status")
@@ -98,6 +99,7 @@ public interface DTOMapper {
     @Mapping(source = "book.releaseYear", target = "releaseYear")
     @Mapping(source = "book.genre", target = "genre")
     @Mapping(source = "book.description", target = "description")
+    @Mapping(source = "book.coverUrl", target = "coverUrl")
     BookGetDTO convertShelfBookToBookGetDTO(ShelfBook shelfBook);
 
     @Mapping(source = "user.id", target = "userId")
