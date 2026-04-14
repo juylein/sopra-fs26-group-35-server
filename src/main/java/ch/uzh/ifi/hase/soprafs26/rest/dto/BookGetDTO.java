@@ -10,6 +10,7 @@ import java.util.List;
      private Integer releaseYear;
      private String genre;
      private String description;
+     private Double averageRating;
 
      public String getId() { return id; }
      public void setId(String id) { this.id = id; }
@@ -31,4 +32,7 @@ import java.util.List;
      
      public String getDescription() { return description; }
      public void setDescription(String description) { this.description = description; }
+
+    public Double getAverageRating() { return averageRating; }
+    public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
  }

@@ -36,61 +36,71 @@ import java.util.List;
 @Mapper
 public interface DTOMapper {
 
-	DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
+    DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
 
-	@Mapping(source = "name", target = "name")
+    @Mapping(source = "name", target = "name")
     @Mapping(source = "username", target = "username")
     @Mapping(source = "bio", target = "bio")
     @Mapping(source = "password", target = "password")
     @Mapping(source = "genres", target = "genres")
     @Mapping(target = "token", expression = "java(java.util.UUID.randomUUID().toString())")
     @Mapping(target = "status", constant = "ONLINE")
-	User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
+    User convertUserPostDTOtoEntity(UserPostDTO userPostDTO);
 
-	@Mapping(source = "id", target = "id")
-	@Mapping(source = "name", target = "name")
-	@Mapping(source = "username", target = "username")
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "username", target = "username")
     @Mapping(source = "bio", target = "bio")
     @Mapping(source = "status", target = "status")
     @Mapping(source = "token", target = "token")
     @Mapping(source = "genres", target = "genres")
     @Mapping(source = "creationDate", target = "creationDate")
-	UserGetDTO convertEntityToUserGetDTO(User user);
+    UserGetDTO convertEntityToUserGetDTO(User user);
 
-	@Mapping(source = "user.id", target = "id")
-	@Mapping(source = "user.username", target = "username")
-	@Mapping(source = "user.booksRead", target = "booksRead")
-	@Mapping(source = "user.pagesRead", target = "pagesRead")
-	@Mapping(source = "user.numFriends", target = "numFriends")
-	@Mapping(source = "leaderboard.totalPoints", target = "totalPoints")
-	UserStatsGetDTO convertToUserStatsGetDTO(User user, Leaderboard leaderboard);
+    @Mapping(source = "user.id", target = "id")
+    @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "user.booksRead", target = "booksRead")
+    @Mapping(source = "user.pagesRead", target = "pagesRead")
+    @Mapping(source = "user.numFriends", target = "numFriends")
+    @Mapping(source = "leaderboard.totalPoints", target = "totalPoints")
+    UserStatsGetDTO convertToUserStatsGetDTO(User user, Leaderboard leaderboard);
 
-	@Mapping(source = "id", target = "id")
-	@Mapping(source = "name", target = "name")
-	@Mapping(source = "authors", target = "authors")
-	@Mapping(source = "pages", target = "pages")
-	@Mapping(source = "releaseYear", target = "releaseYear")
-	@Mapping(source = "genre", target = "genre")
-	@Mapping(source = "description", target = "description")
-	BookGetDTO convertBookEntityToGetDTO(Book book);
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "authors", target = "authors")
+    @Mapping(source = "pages", target = "pages")
+    @Mapping(source = "releaseYear", target = "releaseYear")
+    @Mapping(source = "genre", target = "genre")
+    @Mapping(source = "description", target = "description")
+    BookGetDTO convertBookEntityToGetDTO(Book book);
 
-	@Mapping(source = "status", target = "status")
-	ShelfBookPutDTO convertShelfBookEntityToPutDTO(ShelfBook ShelfBook);
+    @Mapping(source = "status", target = "status")
+    ShelfBookPutDTO convertShelfBookEntityToPutDTO(ShelfBook ShelfBook);
 
-	@Mapping(source = "id", target = "id")
-	@Mapping(source = "name", target = "name")
-	@Mapping(source = "shared", target = "shared")
-	@Mapping(source = "books", target = "books")
-	ShelfGetDTO convertShelfEntityToGetDTO(Shelf shelf);
-	List<ShelfGetDTO> convertShelfEntitiesToGetDTOs(List<Shelf> shelves);
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "name", target = "name")
+    @Mapping(source = "shared", target = "shared")
+    @Mapping(source = "books", target = "books")
+    ShelfGetDTO convertShelfEntityToGetDTO(Shelf shelf);
+    List<ShelfGetDTO> convertShelfEntitiesToGetDTOs(List<Shelf> shelves);
 
-	@Mapping(source = "id", target = "id")
-	@Mapping(source = "user.username", target = "username")
-	@Mapping(source = "book.name", target = "book")
-	@Mapping(source = "actions", target = "actions")
-	ActivitiesGetDTO convertActivitiesEntityToGetDTO(Activities activities);
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "book.name", target = "book")
+    @Mapping(source = "actions", target = "actions")
+    ActivitiesGetDTO convertActivitiesEntityToGetDTO(Activities activities);
 
-	@Mapping(source = "host.id", target = "hostId")
-	@Mapping(source = "book.id", target = "bookId")
-	SessionGetDTO convertSessionEntityToGetDTO(Session session);
+    @Mapping(source = "host.id", target = "hostId")
+    @Mapping(source = "book.id", target = "bookId")
+    SessionGetDTO convertSessionEntityToGetDTO(Session session);
+
+    @Mapping(source = "book.id", target = "id")
+    @Mapping(source = "book.name", target = "name")
+    @Mapping(source = "book.authors", target = "authors")
+    @Mapping(source = "book.pages", target = "pages")
+    @Mapping(source = "book.releaseYear", target = "releaseYear")
+    @Mapping(source = "book.genre", target = "genre")
+    @Mapping(source = "book.description", target = "description")
+    BookGetDTO convertShelfBookToBookGetDTO(ShelfBook shelfBook);
+
 }
