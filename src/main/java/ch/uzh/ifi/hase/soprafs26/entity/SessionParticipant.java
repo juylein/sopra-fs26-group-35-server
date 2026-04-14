@@ -47,8 +47,11 @@ public class SessionParticipant implements Serializable {
 	@Column(nullable = false)
 	private LocalDateTime joinedAt;
 
-	@Column(nullable = false)
+	@Column(nullable = true)
 	private LocalDateTime leftAt;
+
+	@Column(nullable = true)
+	private Long pagesRead;
 
 	public Long getId() {
 		return id;
@@ -96,6 +99,14 @@ public class SessionParticipant implements Serializable {
 
 	public void setLeftAt(LocalDateTime leftAt){
 		this.leftAt = leftAt;
+	}
+
+	public Long getPagesRead() {
+		return pagesRead;
+	}
+
+	public void setPagesRead(Long pagesRead) {
+		this.pagesRead = pagesRead;
 	}
 
 	public Duration getReadingTime(){

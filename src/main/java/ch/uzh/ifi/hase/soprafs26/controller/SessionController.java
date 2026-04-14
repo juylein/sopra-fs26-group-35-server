@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Session;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionLeavePostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs26.service.SessionService;
@@ -47,5 +48,22 @@ public class SessionController {
             @PathVariable Long sessionId) {
         Session session = sessionService.endReadingSession(sessionId);
         return DTOMapper.INSTANCE.convertSessionToGetDTO(session);
+    }
+
+    @PutMapping("/sessions/{sessionId}/joined")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void joinSession(
+            @PathVariable Long userId,
+            @PathVariable Long sessionId) {
+        sessionService.joinSession(sessionId, userId);
+    }
+
+    @PutMapping("/sessions/{sessionId}/left")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leaveSession(
+            @PathVariable Long userId,
+            @PathVariable Long sessionId,
+            @RequestBody SessionLeavePostDTO dto) {
+        sessionService.leaveSession(sessionId, userId, dto.getPagesRead());
     }
 }
