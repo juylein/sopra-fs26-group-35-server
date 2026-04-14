@@ -12,9 +12,6 @@ import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
 
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
-import org.mapstruct.Qualifier;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
@@ -43,9 +40,8 @@ public class LibraryService {
     public LibraryService(ShelfRepository shelfRepository,
                           BookRepository bookRepository,
                           ShelfBookRepository shelfbookRepository,
-                           UserRepository userRepository,
+                          UserRepository userRepository,
                           ActivitiesService activitiesService
-                        
                         ) {
       this.shelfRepository = shelfRepository;
       this.bookRepository = bookRepository;
@@ -150,9 +146,28 @@ public class LibraryService {
 
         Book book = shelfBook.getBook();
 
+        // Remove book from whichever status shelf it currently exists on (if any)
+        List<String> statusShelfNames = List.of("To Read", "Recent Readings", "Read");
+        shelfbookRepository.findByShelf_OwnerIdAndBookIdAndShelf_NameIn(user.getId(), bookId, statusShelfNames)
+            .ifPresent(shelfbookRepository::delete);
+
+        // Add to the new status shelf
+        String targetShelfName = newStatus == BookStatus.READING ? "Recent Readings"
+                               : newStatus == BookStatus.FINISHED ? "Read"
+                               : "To Read";
+
+        Shelf targetShelf = user.getShelves().stream()
+            .filter(s -> targetShelfName.equals(s.getName()))
+            .findFirst()
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, targetShelfName + " shelf not found"));
+
+        targetShelf.addBook(book);
+        shelfRepository.save(targetShelf);
+
         shelfbookRepository.save(shelfBook);
         activitiesService.addActivity(user, newStatus, book);
 
         return shelfBook;
     }
+
 }

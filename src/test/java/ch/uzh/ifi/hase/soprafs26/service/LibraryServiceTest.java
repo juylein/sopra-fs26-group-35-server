@@ -230,9 +230,17 @@ public class LibraryServiceTest {
     @Test
     public void updateBookStatus_validInput_StatusUpdated(){
         //given
+        Shelf readShelf = new Shelf();
+        readShelf.setId(2L);
+        readShelf.setName("Read");
+        readShelf.setOwner(testUser);
+        testUser.getShelves().add(readShelf);
+
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
         given(shelfBookRepository.findByShelfIdAndBookId(1L, "google_test_id"))
                 .willReturn(Optional.of(shelfBook));
+        given(shelfBookRepository.findByShelf_OwnerIdAndBookIdAndShelf_NameIn(any(), any(), any()))
+                .willReturn(Optional.empty());
 
         //when
         ShelfBook result = libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED);
@@ -276,9 +284,17 @@ public class LibraryServiceTest {
     @Test
     public void updateBookStatus_activityLogged_afterStatusChange() {
         // given
+        Shelf readShelf = new Shelf();
+        readShelf.setId(2L);
+        readShelf.setName("Read");
+        readShelf.setOwner(testUser);
+        testUser.getShelves().add(readShelf);
+
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
         given(shelfBookRepository.findByShelfIdAndBookId(1L, "google_test_id"))
                 .willReturn(Optional.of(shelfBook));
+        given(shelfBookRepository.findByShelf_OwnerIdAndBookIdAndShelf_NameIn(any(), any(), any()))
+                .willReturn(Optional.empty());
 
         // when
         libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED);
