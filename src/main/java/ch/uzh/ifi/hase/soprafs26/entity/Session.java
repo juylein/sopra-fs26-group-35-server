@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs26.entity;
 import jakarta.persistence.*;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * Internal Session Representation
@@ -24,6 +25,22 @@ public class Session implements Serializable {
 	@GeneratedValue
 	private Long id;
 
+	@ManyToOne
+	@JoinColumn(name = "host_id", nullable = false)
+	private User host;
+
+	//add session participants here if needed
+
+	@ManyToOne
+	@JoinColumn(name = "book_id", nullable = false)
+	private Book book;
+
+	@Column(nullable = false)
+	private LocalDateTime startTime;
+
+	@Column(nullable = true)
+	private LocalDateTime endTime;
+
 	public Long getId() {
 		return id;
 	}
@@ -31,5 +48,17 @@ public class Session implements Serializable {
 	public void setId(Long id) {
 		this.id = id;
 	}
+
+	public User getHost() { return host; }
+	public void setHost(User host) { this.host = host; }
+
+	public Book getBook() { return book; }
+	public void setBook(Book book) { this.book = book; }
+
+	public LocalDateTime getStartTime() { return startTime; }
+	public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+
+	public LocalDateTime getEndTime() { return endTime; }
+	public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
 }
