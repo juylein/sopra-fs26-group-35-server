@@ -9,14 +9,9 @@ import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Activities;
 
-import ch.uzh.ifi.hase.soprafs26.entity.Session;
-import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
-
 import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
-import ch.uzh.ifi.hase.soprafs26.repository.SessionRepository;
-import ch.uzh.ifi.hase.soprafs26.repository.SessionParticipantRepository;
 
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
@@ -59,12 +54,6 @@ public class LibraryServiceTest {
 
     @Mock
     private UserRepository userRepository;
-
-    @Mock
-    private SessionRepository sessionRepository;
-
-    @Mock
-    private SessionParticipantRepository sessionParticipantRepository;
 
     @InjectMocks
     private LibraryService libraryService;
@@ -312,134 +301,5 @@ public class LibraryServiceTest {
 
         // then — verify activity is logged with the correct arguments
         verify(activitiesService, times(1)).addActivity(testUser, BookStatus.FINISHED, book);
-    }
-
-    // --- Session tests ---
-
-    @Test
-    public void createReadingSession_validInput_createsSessionWithParticipants() {
-        // given
-        User user2 = new User();
-        user2.setId(2L);
-
-        ShelfBook shelfBook2 = new ShelfBook();
-        shelfBook2.setId(2L);
-
-        Session savedSession = new Session();
-        savedSession.setId(10L);
-
-        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
-        given(userRepository.findById(2L)).willReturn(Optional.of(user2));
-        given(shelfBookRepository.findById(1L)).willReturn(Optional.of(shelfBook));
-        given(shelfBookRepository.findById(2L)).willReturn(Optional.of(shelfBook2));
-        given(sessionRepository.save(any(Session.class))).willReturn(savedSession);
-        given(sessionParticipantRepository.save(any(SessionParticipant.class))).willReturn(new SessionParticipant());
-
-        // when
-        Session result = libraryService.createReadingSession(List.of(1L, 2L), List.of(1L, 2L));
-
-        // then
-        assertNotNull(result);
-        verify(sessionRepository, times(1)).save(any(Session.class));
-        verify(sessionParticipantRepository, times(2)).save(any(SessionParticipant.class));
-    }
-
-    @Test
-    public void createReadingSession_mismatchedListSizes_throws400() {
-        // when/then
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.createReadingSession(List.of(1L, 2L), List.of(1L)));
-
-        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
-    }
-
-    @Test
-    public void createReadingSession_userNotFound_throws404() {
-        // given
-        given(userRepository.findById(99L)).willReturn(Optional.empty());
-
-        // when/then
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.createReadingSession(List.of(99L), List.of(1L)));
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-    }
-
-    @Test
-    public void createReadingSession_shelfBookNotFound_throws404() {
-        // given
-        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
-        given(shelfBookRepository.findById(99L)).willReturn(Optional.empty());
-
-        // when/then
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.createReadingSession(List.of(1L), List.of(99L)));
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-    }
-
-    @Test
-    public void startReadingSession_validSession_setsStartTimeAndParticipantJoinedAt() {
-        // given — shelfBook already READING so updateBookStatus is not triggered
-        Session session = new Session();
-        session.setId(10L);
-
-        SessionParticipant participant = new SessionParticipant();
-        participant.setUser(testUser);
-        participant.setShelfBook(shelfBook); // status is READING
-
-        given(sessionRepository.findById(10L)).willReturn(Optional.of(session));
-        given(sessionParticipantRepository.findBySession(session)).willReturn(List.of(participant));
-        given(sessionRepository.save(any(Session.class))).willReturn(session);
-
-        // when
-        Session result = libraryService.startReadingSession(10L);
-
-        // then
-        assertNotNull(result.getStartTime());
-        assertNotNull(participant.getJoinedAt());
-        verify(sessionParticipantRepository, times(1)).save(participant);
-        verify(sessionRepository, times(1)).save(session);
-    }
-
-    @Test
-    public void startReadingSession_sessionNotFound_throws404() {
-        // given
-        given(sessionRepository.findById(99L)).willReturn(Optional.empty());
-
-        // when/then
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.startReadingSession(99L));
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-    }
-
-    @Test
-    public void endReadingSession_validSession_setsEndTime() {
-        // given
-        Session session = new Session();
-        session.setId(10L);
-
-        given(sessionRepository.findById(10L)).willReturn(Optional.of(session));
-        given(sessionRepository.save(any(Session.class))).willReturn(session);
-
-        // when
-        Session result = libraryService.endReadingSession(10L);
-
-        // then
-        assertNotNull(result.getEndTime());
-        verify(sessionRepository, times(1)).save(session);
-    }
-
-    @Test
-    public void endReadingSession_sessionNotFound_throws404() {
-        // given
-        given(sessionRepository.findById(99L)).willReturn(Optional.empty());
-
-        // when/then
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.endReadingSession(99L));
-
-        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     }
 }

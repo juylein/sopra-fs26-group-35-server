@@ -2,7 +2,12 @@ package ch.uzh.ifi.hase.soprafs26.entity;
 
 import jakarta.persistence.*;
 
+import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
+
 import java.io.Serializable;
+import java.util.List;
+import java.util.ArrayList;
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 /**
@@ -25,21 +30,14 @@ public class Session implements Serializable {
 	@GeneratedValue
 	private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "host_id", nullable = false)
-	private User host;
+	@OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true) //if session disappears then all its participants too
+	private List<SessionParticipant> participants = new ArrayList<>();
 
-	//add session participants here if needed
+	@Column
+	private LocalDateTime start_time;
 
-	@ManyToOne
-	@JoinColumn(name = "book_id", nullable = false)
-	private Book book;
-
-	@Column(nullable = false)
-	private LocalDateTime startTime;
-
-	@Column(nullable = true)
-	private LocalDateTime endTime;
+	@Column
+	private LocalDateTime end_time;
 
 	public Long getId() {
 		return id;
@@ -49,16 +47,31 @@ public class Session implements Serializable {
 		this.id = id;
 	}
 
-	public User getHost() { return host; }
-	public void setHost(User host) { this.host = host; }
+	public List<SessionParticipant> getParticipants(){
+		return participants;
+	}
 
-	public Book getBook() { return book; }
-	public void setBook(Book book) { this.book = book; }
+	public void setParticipants(List<SessionParticipant> participants){
+		this.participants = participants;
+	}
 
-	public LocalDateTime getStartTime() { return startTime; }
-	public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
+	public LocalDateTime getStartTime(){
+		return start_time;
+	}
 
-	public LocalDateTime getEndTime() { return endTime; }
-	public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
+	public void setStartTime(LocalDateTime start_time){
+		this.start_time = start_time;
+	}
 
+	public LocalDateTime getEndTime(){
+		return end_time;
+	}
+
+	public void setEndTime(LocalDateTime end_time){
+		this.end_time = end_time;
+	}
+
+	public Duration getSessionTime(){
+		return Duration.between(getStartTime(), getEndTime());
+	}
 }
