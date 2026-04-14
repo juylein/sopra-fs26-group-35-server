@@ -139,4 +139,21 @@ public class UserController {
 		}
 		return activitiesGetDTOs;
 	}
+
+	
+	@PutMapping("/users/{id}")
+    @ResponseStatus(HttpStatus.OK)
+	public void updateUser(
+        @PathVariable Long id,
+        @RequestBody UserPostDTO dto
+	) {
+    userService.update(
+            id,
+            dto.getPassword(),
+            dto.getBio(),
+            dto.getGenres()
+    );
+	}
 }
+
+
