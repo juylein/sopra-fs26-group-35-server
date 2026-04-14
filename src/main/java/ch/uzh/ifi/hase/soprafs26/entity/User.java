@@ -57,15 +57,9 @@ public class User implements Serializable {
     @CreationTimestamp
     private LocalDateTime creationDate;
 
-    @ElementCollection
-    @CollectionTable(
-            name = "user_genres",
-            joinColumns = @JoinColumn(name = "user_id")
-    )
-    @Column(name = "genre")
+    @Column(name = "genres")
     private List<String> genres;
-	@Column(nullable = true)
-	private String favouriteGenre;
+	
 
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Leaderboard leaderboard;

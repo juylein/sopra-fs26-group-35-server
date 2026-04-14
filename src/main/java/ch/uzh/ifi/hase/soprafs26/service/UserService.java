@@ -175,13 +175,11 @@ public class UserService {
         }
         User user = optionalUser.get();
         if (!user.getToken().equals(currentUserToken)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to change this users password");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to change this user profile");
         }
         if (newPassword != null && !newPassword.isEmpty()) {
             String hashedPassword = this.passwordEncoder.encode(newPassword);
             user.setPassword(hashedPassword);
-            user.setStatus(UserStatus.OFFLINE);
-            user.setToken(null);
         }
         if (newBio != null) {
             user.setBio(newBio);
@@ -189,6 +187,6 @@ public class UserService {
         if (newGenres != null) {
             user.setGenres(newGenres);
         }
-        userRepository.flush();
+        userRepository.save(user);
     }
 }
