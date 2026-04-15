@@ -5,6 +5,24 @@ import ch.uzh.ifi.hase.soprafs26.rest.dto.*;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
+import ch.uzh.ifi.hase.soprafs26.entity.Book;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
+import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
+import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
+import ch.uzh.ifi.hase.soprafs26.entity.Session;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookPutDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
+
 import java.util.List;
 
 /**
