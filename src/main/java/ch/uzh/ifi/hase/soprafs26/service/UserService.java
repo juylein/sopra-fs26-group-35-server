@@ -179,7 +179,10 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to logout from this user profile");
         }
 		user.setStatus(UserStatus.OFFLINE);
+        user.setToken(null);
+        
 		log.debug("Logout for: {}", user);
+        userRepository.flush();
 	}
 
 
