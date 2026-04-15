@@ -52,6 +52,9 @@ public class Book implements Serializable {
 	@Column(nullable = true, length = 2000)
 	private String description;
 
+	@Column(nullable = true)
+	private String coverUrl;
+
 	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<ShelfBook> shelves = new HashSet<>();
 
@@ -112,8 +115,17 @@ public class Book implements Serializable {
 		this.description = description;
 	}
 
+	public String getCoverUrl() {
+		return coverUrl;
+	}
+
+	public void setCoverUrl(String coverUrl){
+		this.coverUrl = coverUrl;
+	}
+
 	public Set<ShelfBook> getShelves(){
 		return shelves;
 	}
+
 
 }

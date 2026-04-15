@@ -97,6 +97,7 @@ public class LibraryService {
             b.setReleaseYear(bookPostDTO.getReleaseYear());
             b.setGenre(bookPostDTO.getGenre());
             b.setDescription(bookPostDTO.getDescription());
+            b.setCoverUrl(bookPostDTO.getCoverUrl());
             return bookRepository.save(b);
         });
 

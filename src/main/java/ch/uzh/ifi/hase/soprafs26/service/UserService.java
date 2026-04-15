@@ -167,6 +167,25 @@ public class UserService {
         return userByUsername;
     }
 
+    public void logoutUser(Long id) 
+	{	
+        String currentUserToken = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
+        Optional<User> optionalUser = userRepository.findById(id);
+        if (!optionalUser.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        }
+        User user = optionalUser.get();
+        if (!user.getToken().equals(currentUserToken)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to logout from this user profile");
+        }
+		user.setStatus(UserStatus.OFFLINE);
+        user.setToken(null);
+        
+		log.debug("Logout for: {}", user);
+        userRepository.flush();
+	}
+
+
     public void update(Long id, String newPassword, String newBio, List<String> newGenres) {
         String currentUserToken = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
         Optional<User> optionalUser = userRepository.findById(id);
