@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs26.entity;
 
+import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
 import jakarta.persistence.*;
 
 import ch.uzh.ifi.hase.soprafs26.constant.NotificationStatus;
@@ -33,22 +34,25 @@ public class Notifications implements Serializable {
 	@JoinColumn(name = "recipient_id", nullable = false)
 	private User recipient;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NotificationType type;
+
 	@Column(nullable = false)
 	private String message;
+
+    @Column(nullable = true)
+    private Long referenceId;
+
+    @Column(nullable = false)
+    private boolean read = false;
 
 	@Column(nullable = false)
 	private LocalDateTime createdAt;
 
-	@Column(nullable = false)
-	private NotificationStatus status;
-
-	@Column(nullable = true)
-	private LocalDateTime readAt;
-
 	public Long getId() {
 		return id;
 	}
-
 	public void setId(Long id) {
 		this.id = id;
 	}
@@ -56,41 +60,26 @@ public class Notifications implements Serializable {
 	public User getRecipient() {
 		return recipient;
 	}
-
 	public void setRecipient(User recipient) {
 		this.recipient = recipient;
-	} 
+	}
+
+    public NotificationType getType() { return type; }
+    public void setType(NotificationType type) { this.type = type; }
 
 	public String getMessage() {
 		return message;
 	}
-
 	public void setMessage(String message) {
 		this.message = message;
 	}
 
-	public LocalDateTime getCreatedAt() {
-		return createdAt;
-	}
+    public Long getReferenceId() { return referenceId; }
+    public void setReferenceId(Long referenceId) { this.referenceId = referenceId; }
 
-	public void setCreatedAt(LocalDateTime createdAt) {
-		this.createdAt = createdAt;
-	}
+    public boolean isRead() { return read; }
+    public void setRead(boolean read) { this.read = read; }
 
-	public NotificationStatus getStatus() {
-		return status;
-	}
-
-	public void setStatus(NotificationStatus status) {
-		this.status = status;
-	}
-
-	public LocalDateTime getReadAt() {
-		return readAt;
-	}
-
-	public void setReadAt(LocalDateTime readAt) {
-		this.readAt = readAt;
-	}
-
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
