@@ -171,4 +171,14 @@ public class LibraryService {
         return shelfBook;
     }
 
+    public void deleteShelf(Long userId, Long shelfId){
+        User user = getAuthenticatedUser(userId);
+        Shelf shelf = shelfRepository.findById(shelfId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+        if(!shelf.getOwner().getId().equals(user.getId())){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        shelfRepository.delete(shelf);
+    }
 }
