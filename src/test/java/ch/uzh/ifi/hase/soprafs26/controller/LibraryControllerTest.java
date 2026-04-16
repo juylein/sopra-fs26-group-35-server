@@ -41,6 +41,7 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -276,4 +277,38 @@ public class LibraryControllerTest {
                 .andExpect(status().isNotFound());
     }
 
+        //delete shelf endpoint tests
+
+        @Test
+        @WithMockUser
+        public void deleteShelf_validInput_returnsNoContent() throws Exception {
+        mockMvc.perform(delete("/users/1/library/shelves/1")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+        }
+
+        @Test
+        @WithMockUser
+        public void deleteShelf_wrongUser_returns403() throws Exception {
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"))
+                .when(libraryService).deleteShelf(1L, 1L);
+
+        mockMvc.perform(delete("/users/1/library/shelves/1")
+                        .header("Authorization", "wrong-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @WithMockUser
+        public void deleteShelf_shelfNotFound_returns404() throws Exception {
+        Mockito.doThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"))
+                .when(libraryService).deleteShelf(1L, 99L);
+
+        mockMvc.perform(delete("/users/1/library/shelves/99")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+        }
 }

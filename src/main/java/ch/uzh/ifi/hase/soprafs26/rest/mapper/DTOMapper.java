@@ -100,6 +100,7 @@ public interface DTOMapper {
     @Mapping(source = "book.genre", target = "genre")
     @Mapping(source = "book.description", target = "description")
     @Mapping(source = "book.coverUrl", target = "coverUrl")
+    @Mapping(target = "averageRating", ignore = true)
     BookGetDTO convertShelfBookToBookGetDTO(ShelfBook shelfBook);
 
     @Mapping(source = "user.id", target = "userId")
