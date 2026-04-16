@@ -30,6 +30,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -299,7 +300,53 @@ public class LibraryServiceTest {
         // when
         libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED);
 
-        // then — verify activity is logged with the correct arguments
+        // then verify activity is logged with the correct arguments
         verify(activitiesService, times(1)).addActivity(testUser, BookStatus.FINISHED, book);
+    }
+
+    @Test
+    public void deleteBookfromShelf_returnsNotFound() {
+        given(shelfRepository.findById(99L)).willReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> libraryService.deleteBookfromShelf(99L,"google-book-id", testUser));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+    }
+
+    @Test
+    public void deleteBookfromShelf_sharedShelf_memberCanDelete(){
+        //Shared shelf and testUser is in the owners set
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(1L);
+        sharedShelf.setShared(true);
+        sharedShelf.setOwner(null);
+        sharedShelf.setOwners(Set.of(testUser));
+
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(sharedShelf));
+        given(shelfBookRepository.findByShelfIdAndBookId(1L, "google-book-id")).willReturn(Optional.of(shelfBook));
+
+        assertDoesNotThrow(() -> libraryService.deleteBookfromShelf(1L, "google-book-id", testUser));
+        verify(shelfBookRepository, times(1)).delete(shelfBook);
+    }
+
+    @Test
+    public void deleteBookfromShelf_sharedShelf_memberForbidden403(){
+        User notMember = new User();
+        notMember.setId(99L);
+
+        //Shared shelf
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(1L);
+        sharedShelf.setShared(true);
+        sharedShelf.setOwner(null);
+        sharedShelf.setOwners(Set.of(testUser));
+
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(sharedShelf));
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+            () -> libraryService.deleteBookfromShelf(1L, "google-book-id", notMember));
+
+        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
+        verify(shelfBookRepository, never()).delete(any());
     }
 }

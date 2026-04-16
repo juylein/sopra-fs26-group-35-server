@@ -65,5 +65,20 @@ public class LibraryController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShelf(@PathVariable Long userId, @PathVariable Long shelfId) {
         libraryService.deleteShelf(userId, shelfId);
+    @DeleteMapping("/shelves/{shelfId}/books/{bookId}")
+    
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteBookfromShelf(@PathVariable Long userId,
+                                    @PathVariable Long shelfId, 
+                                    @RequestHeader("Authorization") String token,
+                                    @PathVariable String bookId){
+        User user = userRepository.findByToken(token);
+        if (user == null){
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+        }
+        if (!user.getId().equals(userId)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+        libraryService.deleteBookfromShelf(shelfId, bookId, user);
     }
 }

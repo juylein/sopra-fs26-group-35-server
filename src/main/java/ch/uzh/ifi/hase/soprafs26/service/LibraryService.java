@@ -84,7 +84,10 @@ public class LibraryService {
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
 
-        if (!shelf.getOwner().getId().equals(user.getId())) {
+        boolean isOwner = shelf.getOwner() != null && shelf.getOwner().getId().equals(user.getId());
+        boolean isMember = shelf.getOwners().contains(user);
+
+        if (!isOwner && !isMember){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
         }
 
@@ -111,6 +114,23 @@ public class LibraryService {
 
         shelf.addBook(book);
         return shelfRepository.save(shelf);
+    }
+
+    public void deleteBookfromShelf(Long shelfId, String bookId, User requestingUser){
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+        
+        boolean isOwner = shelf.getOwner() != null && shelf.getOwner().getId().equals(requestingUser.getId());
+        boolean isMember = shelf.getOwners().contains(requestingUser);
+
+        if(!isOwner && !isMember){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        ShelfBook shelfBook = shelfbookRepository.findByShelfIdAndBookId(shelfId, bookId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found on this shelf"));
+
+        shelfbookRepository.delete(shelfBook);
     }
 
     public ShelfBook updateBookStatus(Long shelfId, String bookId, BookStatus newStatus){
