@@ -1,5 +1,7 @@
 package ch.uzh.ifi.hase.soprafs26.rest.mapper;
 
+import ch.uzh.ifi.hase.soprafs26.entity.*;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.*;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
@@ -110,5 +112,13 @@ public interface DTOMapper {
     @Mapping(source = "startTime", target = "startTime")
     @Mapping(source = "endTime", target = "endTime")
     SessionGetDTO convertSessionToGetDTO(Session session);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "type", target = "type")
+    @Mapping(source = "message", target = "message")
+    @Mapping(source = "referenceId", target = "referenceId")
+    @Mapping(source = "read", target = "read")
+    @Mapping(source = "createdAt", target = "createdAt")
+    NotificationGetDTO convertNotificationEntityToGetDTO(Notifications notification);
 
 }
