@@ -315,29 +315,13 @@ public class LibraryControllerTest {
     @Test
     @WithMockUser
     public void deleteBook_returnsNoContent() throws Exception {
-        User user = mockUser(1L, "valid-token");
-        
         //given
-        given(userRepository.findByToken("valid-token")).willReturn(user);
-        willDoNothing().given(libraryService).deleteBookfromShelf(1L, "google-test-id", user);
+        willDoNothing().given(libraryService).deleteBookfromShelf(1L, "2", 1L);
 
         //then
         mockMvc.perform(delete("/users/1/library/shelves/1/books/2")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
-    }
-
-    @Test
-    @WithMockUser
-    public void deleteBook_returnsUnauthorized_returns401() throws Exception {
-        //given 
-        given(userRepository.findByToken("invalid-token")).willReturn(null);
-
-        //then
-        mockMvc.perform(delete("/users/1/library/shelves/1/books/2")
-                        .header("Authorization", "invalid-token")
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
     }
 }

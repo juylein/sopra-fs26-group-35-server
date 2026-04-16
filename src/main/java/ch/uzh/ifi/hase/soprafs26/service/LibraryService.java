@@ -116,9 +116,12 @@ public class LibraryService {
         return shelfRepository.save(shelf);
     }
 
-    public void deleteBookfromShelf(Long shelfId, String bookId, User requestingUser){
+    public void deleteBookfromShelf(Long shelfId, String bookId, Long userId){
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+
+        User requestingUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         
         boolean isOwner = shelf.getOwner() != null && shelf.getOwner().getId().equals(requestingUser.getId());
         boolean isMember = shelf.getOwners().contains(requestingUser);
@@ -143,7 +146,7 @@ public class LibraryService {
         boolean isAuthorized;
 
         if (shelf.getShared()) { // Shared shelf -> check if the requester is one of the members
-            isAuthorized = shelf.getUsers().stream()
+            isAuthorized = shelf.getOwners().stream()
                     .anyMatch(u -> u.getToken().equals(currentToken));
         } else { // Private shelf -> check if the requester is the owner
             isAuthorized = shelf.getOwner().getToken().equals(currentToken);
@@ -159,7 +162,7 @@ public class LibraryService {
         shelfBook.setStatus(newStatus);
 
         User user = shelf.getShared() //Find the right user for the activity log
-                ? shelf.getUsers().stream()
+                ? shelf.getOwners().stream()
                 .filter(u -> u.getToken().equals(currentToken))
                 .findFirst()
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"))

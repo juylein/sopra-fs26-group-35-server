@@ -309,7 +309,7 @@ public class LibraryServiceTest {
         given(shelfRepository.findById(99L)).willReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.deleteBookfromShelf(99L,"google-book-id", testUser));
+                () -> libraryService.deleteBookfromShelf(99L,"google-book-id", 1L));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
     }
@@ -324,9 +324,10 @@ public class LibraryServiceTest {
         sharedShelf.setOwners(Set.of(testUser));
 
         given(shelfRepository.findById(1L)).willReturn(Optional.of(sharedShelf));
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(shelfBookRepository.findByShelfIdAndBookId(1L, "google-book-id")).willReturn(Optional.of(shelfBook));
 
-        assertDoesNotThrow(() -> libraryService.deleteBookfromShelf(1L, "google-book-id", testUser));
+        assertDoesNotThrow(() -> libraryService.deleteBookfromShelf(1L, "google-book-id", 1L));
         verify(shelfBookRepository, times(1)).delete(shelfBook);
     }
 
@@ -343,8 +344,9 @@ public class LibraryServiceTest {
         sharedShelf.setOwners(Set.of(testUser));
 
         given(shelfRepository.findById(1L)).willReturn(Optional.of(sharedShelf));
+        given(userRepository.findById(99L)).willReturn(Optional.of(notMember));
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-            () -> libraryService.deleteBookfromShelf(1L, "google-book-id", notMember));
+            () -> libraryService.deleteBookfromShelf(1L, "google-book-id", 99L));
 
         assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
         verify(shelfBookRepository, never()).delete(any());

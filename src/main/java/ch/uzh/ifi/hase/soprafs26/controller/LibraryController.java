@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.entity.User;
 
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPostDTO;
@@ -64,21 +65,13 @@ public class LibraryController {
     @DeleteMapping("/shelves/{shelfId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteShelf(@PathVariable Long userId, @PathVariable Long shelfId) {
-        libraryService.deleteShelf(userId, shelfId);
-    @DeleteMapping("/shelves/{shelfId}/books/{bookId}")
+        libraryService.deleteShelf(userId, shelfId);}
     
+    @DeleteMapping("/shelves/{shelfId}/books/{bookId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteBookfromShelf(@PathVariable Long userId,
                                     @PathVariable Long shelfId, 
-                                    @RequestHeader("Authorization") String token,
                                     @PathVariable String bookId){
-        User user = userRepository.findByToken(token);
-        if (user == null){
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
-        }
-        if (!user.getId().equals(userId)){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-        }
-        libraryService.deleteBookfromShelf(shelfId, bookId, user);
+        libraryService.deleteBookfromShelf(shelfId, bookId, userId);
     }
 }
