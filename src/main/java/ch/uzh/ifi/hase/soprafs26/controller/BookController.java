@@ -1,11 +1,15 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
+import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ReviewGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs26.service.BookService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 public class BookController {
@@ -25,4 +29,14 @@ public class BookController {
         dto.setAverageRating(bookService.getAverageRating(book));
         return dto;
     }
+
+    @GetMapping("/books/{bookId}/reviews")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<ReviewGetDTO> getReviewsForBook(@PathVariable String bookId){
+        List<Reviews> reviews = bookService.getReviewsforBook(bookId);
+        List<ReviewGetDTO> dto = DTOMapper.INSTANCE.convertReviewEntitiesToGetDTOs(reviews);
+        return dto;
+    }
+
 }

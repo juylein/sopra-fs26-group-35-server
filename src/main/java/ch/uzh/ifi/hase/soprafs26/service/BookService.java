@@ -47,4 +47,10 @@ public class BookService {
         averageRating /= ratings.size();
         return averageRating;
     }
+
+    public List<Reviews> getReviewsforBook(String bookId){
+        Book book = bookRepository.findById(bookId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));;
+        return reviewsRepository.findByBook(book);
+    }
 }
