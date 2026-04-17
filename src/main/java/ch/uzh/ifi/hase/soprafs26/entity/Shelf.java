@@ -49,7 +49,7 @@ public class Shelf implements Serializable {
 	@JoinTable(name = "shared_shelves", 
 	joinColumns = @JoinColumn(name = "shelf_id"), 
 	inverseJoinColumns = @JoinColumn(name = "user_id"))
-	private Set<User> users = new HashSet<>(); //only populated if shared true
+	private Set<User> owners = new HashSet<>(); //only populated if shared true
 
 	public Long getId() {
 		return id;
@@ -79,9 +79,13 @@ public class Shelf implements Serializable {
 		this.owner = owner;
 	}
 
-    public Set<User> getUsers() {
-        return users;
-    }
+	public Set<User> getOwners(){
+		return owners;
+	}
+
+	public void setOwners(Set<User> owners){
+		this.owners = owners;
+	}
 
 	public Set<ShelfBook> getBooks(){
 		return shelfBooks;

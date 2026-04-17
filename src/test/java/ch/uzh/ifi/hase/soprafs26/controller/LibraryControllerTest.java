@@ -38,6 +38,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -311,4 +312,16 @@ public class LibraryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
         }
+    @Test
+    @WithMockUser
+    public void deleteBook_returnsNoContent() throws Exception {
+        //given
+        willDoNothing().given(libraryService).deleteBookfromShelf(1L, "2", 1L);
+
+        //then
+        mockMvc.perform(delete("/users/1/library/shelves/1/books/2")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+    }
 }
