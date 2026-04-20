@@ -60,4 +60,17 @@ public class LibraryController {
     public void updateBookStatus(@PathVariable Long shelfId, @PathVariable String bookId, @RequestParam BookStatus status){
         libraryService.updateBookStatus(shelfId, bookId, status);
     }
+
+    @DeleteMapping("/shelves/{shelfId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteShelf(@PathVariable Long userId, @PathVariable Long shelfId) {
+        libraryService.deleteShelf(userId, shelfId);}
+    
+    @DeleteMapping("/shelves/{shelfId}/books/{bookId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteBookfromShelf(@PathVariable Long userId,
+                                    @PathVariable Long shelfId, 
+                                    @PathVariable String bookId){
+        libraryService.deleteBookfromShelf(shelfId, bookId, userId);
+    }
 }
