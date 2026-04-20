@@ -49,8 +49,7 @@ public class BookService {
     }
 
     public List<Reviews> getReviewsforBook(String bookId){
-        Book book = bookRepository.findById(bookId)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found"));;
+        Book book = getBook(bookId);
         return reviewsRepository.findByBook(book);
     }
 }

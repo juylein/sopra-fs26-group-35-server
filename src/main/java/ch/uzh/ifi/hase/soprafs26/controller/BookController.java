@@ -25,18 +25,16 @@ public class BookController {
     @ResponseBody
     public BookGetDTO getBook(@PathVariable String bookId) {
         Book book = bookService.getBook(bookId);
-        BookGetDTO dto = DTOMapper.INSTANCE.convertBookEntityToGetDTO(book);
-        dto.setAverageRating(bookService.getAverageRating(book));
-        return dto;
+        BookGetDTO bookGetDTO = DTOMapper.INSTANCE.convertBookEntityToGetDTO(book);
+        bookGetDTO.setAverageRating(bookService.getAverageRating(book));
+        return bookGetDTO;
     }
 
     @GetMapping("/books/{bookId}/reviews")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
     public List<ReviewGetDTO> getReviewsForBook(@PathVariable String bookId){
-        List<Reviews> reviews = bookService.getReviewsforBook(bookId);
-        List<ReviewGetDTO> dto = DTOMapper.INSTANCE.convertReviewEntitiesToGetDTOs(reviews);
-        return dto;
+        return DTOMapper.INSTANCE.convertReviewEntitiesToGetDTOs(bookService.getReviewsforBook(bookId));
     }
 
 }
