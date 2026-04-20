@@ -28,6 +28,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -149,6 +150,8 @@ public class LibraryServiceTest {
         shelf.setId(1L);
         shelf.setOwner(testUser);
 
+        shelf.setBooks(new ArrayList<>());
+
         BookPostDTO dto = new BookPostDTO();
         dto.setGoogleId("abc123");
         dto.setName("Dune");
@@ -181,19 +184,21 @@ public class LibraryServiceTest {
         shelf.setId(1L);
         shelf.setOwner(testUser);
 
+        shelf.setBooks(new ArrayList<>());
+    
         BookPostDTO dto = new BookPostDTO();
         dto.setGoogleId("abc123");
-
+    
         Book existingBook = new Book();
         existingBook.setId("abc123");
-
+    
         given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
         given(bookRepository.findById("abc123")).willReturn(Optional.of(existingBook));
         given(shelfRepository.save(shelf)).willReturn(shelf);
-
+    
         libraryService.addBookToShelf(1L, 1L, dto);
-
+    
         verify(bookRepository, never()).save(any(Book.class));
         verify(shelfRepository, times(1)).save(shelf);
     }
@@ -229,26 +234,34 @@ public class LibraryServiceTest {
 
     @Test
     public void updateBookStatus_validInput_StatusUpdated(){
-        //given
+        // given
         Shelf readShelf = new Shelf();
         readShelf.setId(2L);
         readShelf.setName("Read");
         readShelf.setOwner(testUser);
+        readShelf.setBooks(new ArrayList<>());
+        testUser.setShelves(new ArrayList<>());
         testUser.getShelves().add(readShelf);
-
+    
+        shelf.setBooks(new ArrayList<>());
+    
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+    
         given(shelfBookRepository.findByShelfIdAndBookId(1L, "google_test_id"))
                 .willReturn(Optional.of(shelfBook));
+    
         given(shelfBookRepository.findByShelf_OwnerIdAndBookIdAndShelf_NameIn(any(), any(), any()))
                 .willReturn(Optional.empty());
-
-        //when
-        ShelfBook result = libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED);
-
+    
+        // when
+        ShelfBook result = libraryService.updateBookStatus(
+                1L, "google_test_id", BookStatus.FINISHED);
+    
         // then
         assertEquals(BookStatus.FINISHED, result.getStatus());
         verify(shelfBookRepository, times(1)).save(shelfBook);
-        verify(activitiesService, times(1)).addActivity(testUser, BookStatus.FINISHED, book);
+        verify(activitiesService, times(1))
+                .addActivity(testUser, BookStatus.FINISHED, book);
     }
 
     @Test
@@ -288,18 +301,26 @@ public class LibraryServiceTest {
         readShelf.setId(2L);
         readShelf.setName("Read");
         readShelf.setOwner(testUser);
+        readShelf.setBooks(new ArrayList<>()); 
+    
+        testUser.setShelves(new ArrayList<>());
         testUser.getShelves().add(readShelf);
-
+    
+        shelf.setBooks(new ArrayList<>());
+    
         given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+    
         given(shelfBookRepository.findByShelfIdAndBookId(1L, "google_test_id"))
                 .willReturn(Optional.of(shelfBook));
+    
         given(shelfBookRepository.findByShelf_OwnerIdAndBookIdAndShelf_NameIn(any(), any(), any()))
                 .willReturn(Optional.empty());
-
+    
         // when
         libraryService.updateBookStatus(1L, "google_test_id", BookStatus.FINISHED);
-
-        // then — verify activity is logged with the correct arguments
-        verify(activitiesService, times(1)).addActivity(testUser, BookStatus.FINISHED, book);
+    
+        // then
+        verify(activitiesService, times(1))
+                .addActivity(testUser, BookStatus.FINISHED, book);
     }
 }

@@ -2,11 +2,6 @@ package ch.uzh.ifi.hase.soprafs26.entity;
 
 import jakarta.persistence.*;
 
-import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
-import ch.uzh.ifi.hase.soprafs26.entity.User;
-import ch.uzh.ifi.hase.soprafs26.entity.Book;
-import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
-
 import java.io.Serializable;
 import java.util.Set;
 import java.util.HashSet;
@@ -39,7 +34,7 @@ public class Shelf implements Serializable {
 	private String name;
 
 	@OneToMany(mappedBy = "shelf", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<ShelfBook> shelfBooks = new HashSet<>();
+	private List<ShelfBook> shelfBooks;
 
 	@ManyToOne //single-owner shelves
 	@JoinColumn(name = "owner_id")
@@ -83,9 +78,14 @@ public class Shelf implements Serializable {
         return users;
     }
 
-	public Set<ShelfBook> getBooks(){
+	public List<ShelfBook> getBooks(){
 		return shelfBooks;
 	}
+
+	public void setBooks(List<ShelfBook> shelfBooks){
+		this.shelfBooks = shelfBooks;
+	}
+
 	public void addBook(Book book){
 		ShelfBook shelfBook = new ShelfBook();
 		shelfBook.setShelf(this);

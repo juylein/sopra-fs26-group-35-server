@@ -6,7 +6,7 @@
      private Long id;
      private String name;
      private boolean shared;
-     private List<BookGetDTO> books;
+     private List<ShelfBookGetDTO> shelfBooks;
 
      public Long getId() { return id; }
      public void setId(Long id) { this.id = id; }
@@ -17,6 +17,6 @@
      public boolean isShared() { return shared; }
      public void setShared(boolean shared) { this.shared = shared; }
      
-     public List<BookGetDTO> getBooks() { return books; }
-     public void setBooks(List<BookGetDTO> books) { this.books = books; }
+     public List<ShelfBookGetDTO> getShelfBooks() { return shelfBooks; }
+     public void setShelfBooks(List<ShelfBookGetDTO> shelfBooks) { this.shelfBooks = shelfBooks; }
  }
