@@ -101,7 +101,6 @@ public interface DTOMapper {
     @Mapping(source = "id", target = "id")
     @Mapping(source = "book", target = "book")
     @Mapping(source = "pagesRead", target = "pagesRead")
-    
     ShelfBookGetDTO convertShelfBookToShelfBookGetDTO(ShelfBook shelfBook);
     List<ShelfBookGetDTO> convertShelfBookToShelfBookGetDTOs(List<ShelfBook> shelves);
 
