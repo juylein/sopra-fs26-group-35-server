@@ -269,29 +269,42 @@ public class SessionServiceTest {
     public void leaveSession_validInput_setsLeftAtAndAwardsPoints() {
         Session session = new Session();
         session.setId(10L);
-
+    
         SessionParticipant sp = new SessionParticipant();
         sp.setUser(user1);
         sp.setSession(session);
-        sp.setJoinedAt(LocalDateTime.now().minusMinutes(20));
-
+        sp.setJoinedAt(LocalDateTime.of(2024, 1, 1, 10, 0));
+    
+        ShelfBook shelfBook = new ShelfBook();
+        shelfBook.setId(50L);
+        shelfBook.setBook(new Book());
+    
         given(sessionRepository.findById(10L)).willReturn(Optional.of(session));
         given(userRepository.findById(1L)).willReturn(Optional.of(user1));
-        given(sessionParticipantRepository.findBySessionAndUser(session, user1)).willReturn(Optional.of(sp));
-        given(leaderboardRepository.findByUser(user1)).willReturn(null);
-
-        sessionService.leaveSession(10L, 1L, 50L);
-
+        given(sessionParticipantRepository.findBySessionAndUser(session, user1))
+                .willReturn(Optional.of(sp));
+    
+        given(shelfBookRepository.findById(50L))
+                .willReturn(Optional.of(shelfBook));
+    
+        given(leaderboardRepository.findByUser(user1))
+                .willReturn(null);
+    
+        sessionService.leaveSession(10L, 1L, 50L, 100L);
+    
         assertNotNull(sp.getLeftAt());
-        assertEquals(50L, sp.getPagesRead());
-        verify(leaderboardRepository, times(1)).save(any(Leaderboard.class));
+        assertEquals(100L, sp.getPagesRead());
+    
+        verify(leaderboardRepository, times(1))
+                .save(any(Leaderboard.class));
     }
 
     @Test
     public void leaveSession_existingLeaderboard_addsToExistingPoints() {
         Session session = new Session();
         session.setId(10L);
-
+        ShelfBook shelfBook = new ShelfBook();
+        shelfBook.setId(50L);
         SessionParticipant sp = new SessionParticipant();
         sp.setUser(user1);
         sp.setSession(session);
@@ -303,11 +316,12 @@ public class SessionServiceTest {
         existingLeaderboard.addReadingPoints(10L);
 
         given(sessionRepository.findById(10L)).willReturn(Optional.of(session));
+        given(shelfBookRepository.findById(50L)).willReturn(Optional.of(shelfBook));
         given(userRepository.findById(1L)).willReturn(Optional.of(user1));
         given(sessionParticipantRepository.findBySessionAndUser(session, user1)).willReturn(Optional.of(sp));
         given(leaderboardRepository.findByUser(user1)).willReturn(existingLeaderboard);
 
-        sessionService.leaveSession(10L, 1L, 100L);
+        sessionService.leaveSession(10L, 1L, 50L, 100L);
 
         // points from session: round((100 * 0.1) + (40 * 0.05)) = round(10 + 2) = 12
         // total reading points: 10 (existing) + 12 (new) = 22
@@ -320,7 +334,7 @@ public class SessionServiceTest {
         given(sessionRepository.findById(99L)).willReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> sessionService.leaveSession(99L, 1L, 10L));
+                () -> sessionService.leaveSession(99L, 1L, 10L,10L));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
@@ -334,7 +348,7 @@ public class SessionServiceTest {
         given(userRepository.findById(99L)).willReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> sessionService.leaveSession(10L, 99L, 10L));
+                () -> sessionService.leaveSession(10L, 99L, 10L, 10L));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }
@@ -349,7 +363,7 @@ public class SessionServiceTest {
         given(sessionParticipantRepository.findBySessionAndUser(session, user1)).willReturn(Optional.empty());
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> sessionService.leaveSession(10L, 1L, 10L));
+                () -> sessionService.leaveSession(10L, 1L, 10L,10L));
 
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
     }

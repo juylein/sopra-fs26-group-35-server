@@ -79,10 +79,11 @@ public class Book implements Serializable {
 		this.name = name;
 	}
 
-	public List getAuthors() {
+	public List<String> getAuthors() {
 		return authors;
 	}
-	public void setAuthors(List authors) {
+
+	public void setAuthors(List<String> authors) {
 		this.authors = authors;
 	}
 

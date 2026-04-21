@@ -5,6 +5,25 @@ import ch.uzh.ifi.hase.soprafs26.rest.dto.*;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
+import ch.uzh.ifi.hase.soprafs26.entity.Book;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
+import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
+import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
+import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
+import ch.uzh.ifi.hase.soprafs26.entity.Session;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookPutDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
+
 import java.util.List;
 
 /**
@@ -58,6 +77,7 @@ public interface DTOMapper {
     @Mapping(source = "genre", target = "genre")
     @Mapping(source = "description", target = "description")
     @Mapping(source = "coverUrl", target = "coverUrl")
+    @Mapping(target = "averageRating", ignore = true)
     BookGetDTO convertBookEntityToGetDTO(Book book);
 
     @Mapping(source = "status", target = "status")
@@ -66,7 +86,7 @@ public interface DTOMapper {
     @Mapping(source = "id", target = "id")
     @Mapping(source = "name", target = "name")
     @Mapping(source = "shared", target = "shared")
-    @Mapping(source = "books", target = "books")
+    @Mapping(source = "books", target = "shelfBooks")
     ShelfGetDTO convertShelfEntityToGetDTO(Shelf shelf);
     List<ShelfGetDTO> convertShelfEntitiesToGetDTOs(List<Shelf> shelves);
 
@@ -76,15 +96,11 @@ public interface DTOMapper {
     @Mapping(source = "actions", target = "actions")
     ActivitiesGetDTO convertActivitiesEntityToGetDTO(Activities activities);
 
-    @Mapping(source = "book.id", target = "id")
-    @Mapping(source = "book.name", target = "name")
-    @Mapping(source = "book.authors", target = "authors")
-    @Mapping(source = "book.pages", target = "pages")
-    @Mapping(source = "book.releaseYear", target = "releaseYear")
-    @Mapping(source = "book.genre", target = "genre")
-    @Mapping(source = "book.description", target = "description")
-    @Mapping(source = "book.coverUrl", target = "coverUrl")
-    BookGetDTO convertShelfBookToBookGetDTO(ShelfBook shelfBook);
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "book", target = "book")
+    @Mapping(source = "pagesRead", target = "pagesRead")
+    ShelfBookGetDTO convertShelfBookToShelfBookGetDTO(ShelfBook shelfBook);
+    List<ShelfBookGetDTO> convertShelfBookToShelfBookGetDTOs(List<ShelfBook> shelves);
 
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "shelfBook.id", target = "shelfBookId")

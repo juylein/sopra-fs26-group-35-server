@@ -170,6 +170,11 @@ public class User implements Serializable {
 	 	return shelves;
 	}
 
+	public void setShelves(List<Shelf> shelves)
+	{
+		this.shelves = shelves;
+	}
+
 	public Long getBooksRead(){
 		Shelf readShelf = getReadShelf();
 		return readShelf == null ? 0L: (long) readShelf.getBooks().size();

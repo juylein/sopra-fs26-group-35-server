@@ -21,7 +21,7 @@ public class SessionController {
         this.sessionService = sessionService;
     }
 
-    @PostMapping("/sessions")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SessionGetDTO createReadingSession(
             @PathVariable Long userId,
@@ -32,7 +32,7 @@ public class SessionController {
         return DTOMapper.INSTANCE.convertSessionToGetDTO(session);
     }
 
-    @PutMapping("/sessions/{sessionId}/started")
+    @PutMapping("/{sessionId}/started")
     @ResponseStatus(HttpStatus.OK)
     public SessionGetDTO startReadingSession(
             @PathVariable Long userId,
@@ -41,7 +41,7 @@ public class SessionController {
         return DTOMapper.INSTANCE.convertSessionToGetDTO(session);
     }
 
-    @PutMapping("/sessions/{sessionId}/ended")
+    @PutMapping("/{sessionId}/ended")
     @ResponseStatus(HttpStatus.OK)
     public SessionGetDTO endReadingSession(
             @PathVariable Long userId,
@@ -50,7 +50,7 @@ public class SessionController {
         return DTOMapper.INSTANCE.convertSessionToGetDTO(session);
     }
 
-    @PutMapping("/sessions/{sessionId}/joined")
+    @PutMapping("/{sessionId}/joined")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void joinSession(
             @PathVariable Long userId,
@@ -58,12 +58,12 @@ public class SessionController {
         sessionService.joinSession(sessionId, userId);
     }
 
-    @PutMapping("/sessions/{sessionId}/left")
+    @PutMapping("/{sessionId}/left")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void leaveSession(
             @PathVariable Long userId,
             @PathVariable Long sessionId,
             @RequestBody SessionLeavePostDTO dto) {
-        sessionService.leaveSession(sessionId, userId, dto.getPagesRead());
+        sessionService.leaveSession(sessionId, userId, dto.getShelfBookId(), dto.getPagesRead());
     }
 }
