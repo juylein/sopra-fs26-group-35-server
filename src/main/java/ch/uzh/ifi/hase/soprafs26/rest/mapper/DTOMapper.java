@@ -13,7 +13,10 @@ import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Activities;
 import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
 import ch.uzh.ifi.hase.soprafs26.entity.Session;
+import ch.uzh.ifi.hase.soprafs26.entity.FriendRequest;
+
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendRequestGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookGetDTO;
@@ -128,4 +131,11 @@ public interface DTOMapper {
     ReviewGetDTO convertReviewToGetDTO(Reviews review);
     List<ReviewGetDTO> convertReviewEntitiesToGetDTOs(List<Reviews> reviews);
 
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "requester.id", target = "requesterId")
+    @Mapping(source = "recipient.id", target = "recipientId")
+    @Mapping(source = "status", target = "status")
+    @Mapping(source = "createdAt", target = "createdAt")
+    @Mapping(source = "resolvedAt", target = "resolvedAt")
+    FriendRequestGetDTO convertFriendRequestToGetDTO(FriendRequest friend_request);
 }
