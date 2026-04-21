@@ -118,4 +118,14 @@ public interface DTOMapper {
     @Mapping(source = "read", target = "read")
     @Mapping(source = "createdAt", target = "createdAt")
     NotificationGetDTO convertNotificationEntityToGetDTO(Notifications notification);
+
+    @Mapping(source = "user.id", target = "userId")
+    @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "dateTime", target = "timestamp") 
+    @Mapping(source = "rating", target = "rating")
+    @Mapping(source = "review", target = "review")
+    @Mapping(source = "id", target = "id")
+    ReviewGetDTO convertReviewToGetDTO(Reviews review);
+    List<ReviewGetDTO> convertReviewEntitiesToGetDTOs(List<Reviews> reviews);
+
 }

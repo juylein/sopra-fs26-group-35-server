@@ -47,4 +47,9 @@ public class BookService {
         averageRating /= ratings.size();
         return averageRating;
     }
+
+    public List<Reviews> getReviewsforBook(String bookId){
+        Book book = getBook(bookId);
+        return reviewsRepository.findByBook(book);
+    }
 }
