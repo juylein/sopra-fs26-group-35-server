@@ -39,6 +39,10 @@ public class ShelfBook implements Serializable {
 	@Enumerated(EnumType.STRING)
 	private BookStatus status = BookStatus.UNREAD;
 
+	@Column(nullable = true)
+	private Long pagesRead;
+
+
 	public Long getId(){
 		return id;
 	}
@@ -69,5 +73,15 @@ public class ShelfBook implements Serializable {
 
 	public void setStatus(BookStatus status){
 		this.status = status;
+	} 
+
+	public Long getPagesRead(){
+		return pagesRead;
 	}
+
+	public void setPagesRead(Long pagesRead){
+		this.pagesRead = pagesRead;
+	}
+
+
 }

@@ -70,10 +70,13 @@ public class SessionService {
         for (int i = 0; i < participants.size(); i++) {
             SessionParticipant sp = new SessionParticipant();
             sp.setSession(newSession);
+            sp.setJoinedAt(LocalDateTime.now()); 
             sp.setUser(participants.get(i));
             sp.setShelfBook(books.get(i));
+
             sessionParticipantRepository.save(sp);
         }
+
         return newSession;
     }
 
@@ -119,7 +122,7 @@ public class SessionService {
         sessionRepository.deleteAll(oldSessions);
     }
 
-    public void leaveSession(Long sessionId, Long userId, Long pagesRead) {
+    public void leaveSession(Long sessionId, Long userId, Long shelfBookId, Long pagesRead) {
         Session session = sessionRepository.findById(sessionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
 
@@ -129,9 +132,15 @@ public class SessionService {
         SessionParticipant sp = sessionParticipantRepository.findBySessionAndUser(session, user)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Participant not found in session"));
 
+        ShelfBook shelfBook = shelfbookRepository.findById(shelfBookId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf book not found"));
+
         sp.setLeftAt(LocalDateTime.now());
         sp.setPagesRead(pagesRead);
         sessionParticipantRepository.save(sp);
+
+        shelfBook.setPagesRead(pagesRead);
+        shelfbookRepository.save(shelfBook);
 
         long minutesRead = sp.getReadingTime().toMinutes();
         long points = Math.round((pagesRead * 0.1) + (minutesRead * 0.05));

@@ -68,7 +68,7 @@ public class SessionControllerTest {
 
         given(sessionService.createReadingSession(Mockito.any(), Mockito.any())).willReturn(session);
 
-        mockMvc.perform(post("/users/1/sessions/sessions")
+        mockMvc.perform(post("/users/1/sessions")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(List.of(dto))))
@@ -78,7 +78,7 @@ public class SessionControllerTest {
 
     @Test
     public void createReadingSession_invalidAuthentication_returns401() throws Exception {
-        mockMvc.perform(post("/users/1/sessions/sessions")
+        mockMvc.perform(post("/users/1/sessions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(List.of())))
                 .andExpect(status().isUnauthorized());
@@ -94,7 +94,7 @@ public class SessionControllerTest {
         given(sessionService.createReadingSession(Mockito.any(), Mockito.any()))
                 .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        mockMvc.perform(post("/users/1/sessions/sessions")
+        mockMvc.perform(post("/users/1/sessions")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(List.of(dto))))
@@ -111,7 +111,7 @@ public class SessionControllerTest {
         given(sessionService.createReadingSession(Mockito.any(), Mockito.any()))
                 .willThrow(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Each participant must have exactly one book"));
 
-        mockMvc.perform(post("/users/1/sessions/sessions")
+        mockMvc.perform(post("/users/1/sessions")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(List.of(dto))))
@@ -128,7 +128,7 @@ public class SessionControllerTest {
 
         given(sessionService.startReadingSession(10L)).willReturn(session);
 
-        mockMvc.perform(put("/users/1/sessions/sessions/10/started")
+        mockMvc.perform(put("/users/1/sessions/10/started")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -141,7 +141,7 @@ public class SessionControllerTest {
         given(sessionService.startReadingSession(99L))
                 .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
 
-        mockMvc.perform(put("/users/1/sessions/sessions/99/started")
+        mockMvc.perform(put("/users/1/sessions/99/started")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -149,7 +149,7 @@ public class SessionControllerTest {
 
     @Test
     public void startReadingSession_invalidAuthentication_returns401() throws Exception {
-        mockMvc.perform(put("/users/1/sessions/sessions/10/started")
+        mockMvc.perform(put("/users/1/sessions/10/started")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
@@ -164,7 +164,7 @@ public class SessionControllerTest {
 
         given(sessionService.endReadingSession(10L)).willReturn(session);
 
-        mockMvc.perform(put("/users/1/sessions/sessions/10/ended")
+        mockMvc.perform(put("/users/1/sessions/10/ended")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -177,7 +177,7 @@ public class SessionControllerTest {
         given(sessionService.endReadingSession(99L))
                 .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
 
-        mockMvc.perform(put("/users/1/sessions/sessions/99/ended")
+        mockMvc.perform(put("/users/1/sessions/99/ended")
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
@@ -185,7 +185,7 @@ public class SessionControllerTest {
 
     @Test
     public void endReadingSession_invalidAuthentication_returns401() throws Exception {
-        mockMvc.perform(put("/users/1/sessions/sessions/10/ended")
+        mockMvc.perform(put("/users/1/sessions/10/ended")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
