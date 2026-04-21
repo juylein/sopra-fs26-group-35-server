@@ -122,7 +122,6 @@ public interface DTOMapper {
     @Mapping(source = "createdAt", target = "createdAt")
     NotificationGetDTO convertNotificationEntityToGetDTO(Notifications notification);
 
-<<<<<<< HEAD
     @Mapping(source = "user.id", target = "userId")
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "dateTime", target = "timestamp") 
@@ -132,7 +131,6 @@ public interface DTOMapper {
     ReviewGetDTO convertReviewToGetDTO(Reviews review);
     List<ReviewGetDTO> convertReviewEntitiesToGetDTOs(List<Reviews> reviews);
 
-=======
     @Mapping(source = "id", target = "id")
     @Mapping(source = "requester.id", target = "requesterId")
     @Mapping(source = "recipient.id", target = "recipientId")
@@ -140,5 +138,4 @@ public interface DTOMapper {
     @Mapping(source = "createdAt", target = "createdAt")
     @Mapping(source = "resolvedAt", target = "resolvedAt")
     FriendRequestGetDTO convertFriendRequestToGetDTO(FriendRequest friend_request);
->>>>>>> e10a4f3 (implementation of friend request logic along with its tests)
 }
