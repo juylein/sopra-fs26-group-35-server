@@ -73,6 +73,9 @@ public class User implements Serializable {
 	@OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Shelf> shelves = new ArrayList<>();
 
+	@ManyToMany(mappedBy = "owners")
+	private Set<Shelf> sharedShelves = new HashSet<>();
+
 	public Long getId() {
 		return id;
 	}
