@@ -78,7 +78,7 @@ public class User implements Serializable {
 	@OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Activities activities;
 
-	@OneToMany(mappedBy = "user_id", cascade = CasvadeType.ALL, orphanRemoval=true)
+	@OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL, orphanRemoval=true)
 	private Reviews reviews;
 
 	@OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL, orphanRemoval = true)
