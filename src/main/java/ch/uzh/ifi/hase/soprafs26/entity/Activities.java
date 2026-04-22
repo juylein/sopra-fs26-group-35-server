@@ -8,6 +8,7 @@ import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * Internal Activities Representation
@@ -33,7 +34,8 @@ public class Activities implements Serializable {
 	@JoinColumn(name = "user_id")
 	private User user; 
 
-	@OneToOne(mappedBy = "activities")
+	@ManyToOne
+	@JoinColumn(name = "book_id")
 	private Book book;
 
 	@Column(nullable = false)
