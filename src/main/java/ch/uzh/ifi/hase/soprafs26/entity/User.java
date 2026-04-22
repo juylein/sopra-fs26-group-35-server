@@ -75,23 +75,23 @@ public class User implements Serializable {
 	@ManyToMany(mappedBy = "owners")
 	private Set<Shelf> sharedShelves = new HashSet<>();
 
-	@OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Activities activities;
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Activities> activities;
 
-	@OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL, orphanRemoval=true)
-	private Reviews reviews;
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Reviews> reviews;
 
-	@OneToMany(mappedBy = "user_id", cascade = CascadeType.ALL, orphanRemoval = true)
-	private SessionParticipant session_participant;
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<SessionParticipant> session_participant;
 
-	@OneToMany(mappedBy = "recipient_id", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Notifications notifications;
+	@OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Notifications> notifications;
 
-	@OneToMany(mappedBy = "recipient_id", cascade = CascadeType.ALL, orphanRemoval = true)
-	private FriendRequest requests_received;
+	@OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<FriendRequest> requests_received;
 
-	@OneToMany(mappedBy = "requester_id", cascade = CascadeType.ALL, orphanRemoval = true)
-	private FriendRequest requests_sent;
+	@OneToMany(mappedBy = "requester", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<FriendRequest> requests_sent;
 
 	public Long getId() {
 		return id;
