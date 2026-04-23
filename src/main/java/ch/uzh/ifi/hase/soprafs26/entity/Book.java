@@ -58,9 +58,8 @@ public class Book implements Serializable {
 	@OneToMany(mappedBy = "book", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<ShelfBook> shelves = new HashSet<>();
 
-	@OneToOne
-	@JoinColumn(name = "activities_id")
-	private Activities activities;
+	@OneToMany(mappedBy = "book")
+	private Set<Activities> activities;
 
 	@OneToMany(mappedBy = "book")
 	private Set<Reviews> reviews;

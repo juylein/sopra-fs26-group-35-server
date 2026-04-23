@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
 
 import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -34,6 +35,9 @@ public class ShelfBook implements Serializable {
 	@ManyToOne
 	@JoinColumn(name = "book_id", nullable = false)
 	private Book book;
+
+	@OneToMany(mappedBy = "shelfBook")
+	private List<SessionParticipant> session_participant;
 
 	@Column(nullable = false)
 	@Enumerated(EnumType.STRING)
