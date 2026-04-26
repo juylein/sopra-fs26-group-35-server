@@ -168,4 +168,8 @@ public class FriendService {
 
         return reverse.isPresent() && reverse.get().getStatus() == FriendRequestStatus.PENDING;
     }
+
+    public List<Friendships> getFriends(Long userAId){
+        return friendshipsRepository.findByUserA_Id(userAId);
+    }
 }

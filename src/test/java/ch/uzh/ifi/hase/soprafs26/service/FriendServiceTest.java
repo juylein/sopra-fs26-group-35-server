@@ -199,4 +199,17 @@ public class FriendServiceTest {
         assertNotNull(result);
         verify(friendRequestRepository, times(1)).findByRequester_Id(1L);
     }
+
+    @Test
+    public void getFriends_callsRepository(){
+
+        Friendships friendship = new Friendships();
+        friendship.setUserA(requester);
+        friendship.setUserB(recipient);
+        when(friendshipsRepository.findByUserA_Id(1L)).thenReturn(List.of(friendship));
+
+        List<Friendships> friends = friendService.getFriends(1L);
+
+        assertNotNull(friends);
+    }
 }

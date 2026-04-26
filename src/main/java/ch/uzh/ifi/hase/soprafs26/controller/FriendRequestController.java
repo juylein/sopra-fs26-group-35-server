@@ -1,7 +1,9 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.entity.FriendRequest;
+import ch.uzh.ifi.hase.soprafs26.entity.Friendships;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendRequestGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendshipGetDTO;
 import ch.uzh.ifi.hase.soprafs26.service.FriendService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -73,5 +75,20 @@ public class FriendRequestController {
     ) {
         FriendRequest rejectFriendRequest = friendService.rejectFriendRequest(requestId, userId);
         return DTOMapper.INSTANCE.convertFriendRequestToGetDTO(rejectFriendRequest);
+    }
+
+    @GetMapping("/users/{userId}/friends")
+    @ResponseStatus(HttpStatus.OK)
+    public List<FriendshipGetDTO> getFriends(
+        @PathVariable Long userId
+    ){
+        List<Friendships> friends = friendService.getFriends(userId);
+        List<FriendshipGetDTO> friendsGetDTO = new ArrayList<>(); 
+
+        for (Friendships friend : friends){
+            friendsGetDTO.add(DTOMapper.INSTANCE.convertFriendshipToGetDTO(friend));
+        }
+
+        return friendsGetDTO; 
     }
 }

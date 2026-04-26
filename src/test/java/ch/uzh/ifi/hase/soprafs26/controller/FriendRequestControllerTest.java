@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs26.controller;
 import ch.uzh.ifi.hase.soprafs26.AuthTokenFilter;
 import ch.uzh.ifi.hase.soprafs26.SecurityConfig;
 import ch.uzh.ifi.hase.soprafs26.entity.FriendRequest;
+import ch.uzh.ifi.hase.soprafs26.entity.Friendships;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendRequestGetDTO;
@@ -209,5 +210,43 @@ public class FriendRequestControllerTest {
                         .header("Authorization", "valid-token")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser
+    public void getFriends_userId_returnsOK() throws Exception {
+        User userA = new User();
+        userA.setId(1L);
+
+        User userB = new User();
+        userB.setId(2L);
+
+        User userC = new User();
+        userC.setId(3L);
+
+        Friendships friendshipAB = new Friendships();
+        friendshipAB.setId(100L);
+        friendshipAB.setUserA(userA);
+        friendshipAB.setUserB(userB);
+
+        Friendships friendshipAC = new Friendships();
+        friendshipAC.setId(101L);
+        friendshipAC.setUserA(userA);
+        friendshipAC.setUserB(userC);
+
+        List<Friendships> friends = List.of(friendshipAB, friendshipAC);
+
+        given(friendService.getFriends(1L)).willReturn(friends);
+
+        mockMvc.perform(get("/users/1/friends")
+                        .header("Authorization", "valid-token"))
+                        .andExpect(status().isOk())
+                        .andExpect(jsonPath("$[0].id", is(100)))
+                        .andExpect(jsonPath("$[0].userA.id", is(1)))
+                        .andExpect(jsonPath("$[0].userB.id", is(2)))
+                        .andExpect(jsonPath("$[1].id", is(101)))
+                        .andExpect(jsonPath("$[1].userA.id", is(1)))
+                        .andExpect(jsonPath("$[1].userB.id", is(3)));
+            
     }
 }
