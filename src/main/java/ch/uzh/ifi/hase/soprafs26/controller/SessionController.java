@@ -66,4 +66,11 @@ public class SessionController {
             @RequestBody SessionLeavePostDTO dto) {
         sessionService.leaveSession(sessionId, userId, dto.getShelfBookId(), dto.getPagesRead());
     }
+
+    @GetMapping("/latest")
+    @ResponseStatus(HttpStatus.OK)
+    public SessionGetDTO getLatestSession(@PathVariable Long userId) {
+        Session session = sessionService.getLatestSessionForUser(userId);
+        return DTOMapper.INSTANCE.convertSessionToGetDTO(session);
+    }
 }
