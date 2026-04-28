@@ -15,6 +15,7 @@ public class UserGetDTO {
     private String token;
     private List<String> genres;
     private LocalDateTime creationDate;
+	private List<UserGetDTO> friends;
 
 	public Long getId() {
 		return id;
@@ -74,5 +75,13 @@ public class UserGetDTO {
 
     public void setCreationDate(LocalDateTime creationDate) { 
 		this.creationDate = creationDate; 
+	}
+
+	public List<UserGetDTO> getFriends() {
+		return this.friends;
+	}
+
+	public void setFriends(List<UserGetDTO> friends) {
+		this.friends = friends;
 	}
 }
