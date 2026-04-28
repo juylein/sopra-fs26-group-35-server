@@ -186,6 +186,13 @@ public class UserService {
 	}
 
 
+    public List<User> searchUsers(String query) {
+        if (query == null || query.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Search query must not be empty");
+        }
+        return userRepository.findByUsernameContainingIgnoreCase(query);
+    }
+
     public void update(Long id, String newPassword, String newBio, List<String> newGenres) {
         String currentUserToken = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
         Optional<User> optionalUser = userRepository.findById(id);

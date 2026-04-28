@@ -107,6 +107,18 @@ public class UserController {
 		return DTOMapper.INSTANCE.convertToUserStatsGetDTO(user, leaderboard);
 	}
 
+	@GetMapping("/users/search")
+	@ResponseStatus(HttpStatus.OK)
+	@ResponseBody
+	public List<UserGetDTO> searchUsers(@RequestParam String query) {
+		List<User> users = userService.searchUsers(query);
+		List<UserGetDTO> userGetDTOs = new ArrayList<>();
+		for (User user : users) {
+			userGetDTOs.add(DTOMapper.INSTANCE.convertEntityToUserGetDTO(user));
+		}
+		return userGetDTOs;
+	}
+
 	@GetMapping("/users/leaderboard")
 	@ResponseStatus(HttpStatus.OK)
 	@ResponseBody

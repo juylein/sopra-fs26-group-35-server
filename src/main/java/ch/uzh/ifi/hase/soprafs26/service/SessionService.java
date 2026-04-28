@@ -65,6 +65,13 @@ public class SessionService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ShelfBook not found")))
             .toList();
 
+        for (ShelfBook book : books) {
+            if (book.getShelf().getShared()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Reading sessions can only use books from individual shelves, not shared shelves");
+            }
+        }
+
         Session newSession = new Session();
         sessionRepository.save(newSession);
 
