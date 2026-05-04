@@ -60,7 +60,6 @@ public class User implements Serializable {
     @Column(name = "genres")
     private List<String> genres;
 	
-
 	@OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Leaderboard leaderboard;
 
@@ -72,6 +71,27 @@ public class User implements Serializable {
 
 	@OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Shelf> shelves = new ArrayList<>();
+
+	@ManyToMany(mappedBy = "owners")
+	private Set<Shelf> sharedShelves = new HashSet<>();
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Activities> activities;
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Reviews> reviews;
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<SessionParticipant> session_participant;
+
+	@OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Notifications> notifications;
+
+	@OneToMany(mappedBy = "recipient", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<FriendRequest> requests_received;
+
+	@OneToMany(mappedBy = "requester", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<FriendRequest> requests_sent;
 
 	public Long getId() {
 		return id;

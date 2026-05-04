@@ -199,4 +199,5 @@ public class FriendServiceTest {
         assertNotNull(result);
         verify(friendRequestRepository, times(1)).findByRequester_Id(1L);
     }
+
 }

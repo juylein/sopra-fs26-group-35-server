@@ -14,6 +14,7 @@ import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -63,6 +64,13 @@ public class SessionService {
             .map(id -> shelfbookRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ShelfBook not found")))
             .toList();
+
+        for (ShelfBook book : books) {
+            if (book.getShelf().getShared()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Reading sessions can only use books from individual shelves, not shared shelves");
+            }
+        }
 
         Session newSession = new Session();
         sessionRepository.save(newSession);
@@ -153,5 +161,20 @@ public class SessionService {
         }
         leaderboard.addReadingPoints(points);
         leaderboardRepository.save(leaderboard);
+    }
+
+    public Session getLatestSessionForUser(Long userId) {
+        String currentUserToken = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!user.getToken().equals(currentUserToken)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this user's sessions");
+        }
+
+        return sessionRepository.findLatestSoloSessionForUser(userId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "No solo sessions found for user " + userId));
     }
 }

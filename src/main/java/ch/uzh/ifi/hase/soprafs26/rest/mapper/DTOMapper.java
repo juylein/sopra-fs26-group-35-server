@@ -106,6 +106,9 @@ public interface DTOMapper {
     @Mapping(source = "id", target = "id")
     @Mapping(source = "startTime", target = "startTime")
     @Mapping(source = "endTime", target = "endTime")
+    @Mapping(target = "bookId", expression = "java(getBookId(session))")
+    @Mapping(target = "bookTitle", expression = "java(getBookTitle(session))")
+    @Mapping(target = "coverUrl", expression = "java(getBookCoverUrl(session))")
     SessionGetDTO convertSessionToGetDTO(Session session);
 
     @Mapping(source = "id", target = "id")
@@ -132,4 +135,27 @@ public interface DTOMapper {
     @Mapping(source = "createdAt", target = "createdAt")
     @Mapping(source = "resolvedAt", target = "resolvedAt")
     FriendRequestGetDTO convertFriendRequestToGetDTO(FriendRequest friend_request);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "userA", target = "userA")
+    @Mapping(source = "userB", target = "userB")
+    @Mapping(source = "since", target = "since")
+    FriendshipGetDTO convertFriendshipToGetDTO(Friendships friend_request);
+
+
+    // Helper Methods to extract the values manually as Session doesn't have bookId/bookTitle/coverUrl as direct fields (nested inside a List)
+    default String getBookId(Session session) {
+        if (session.getParticipants().isEmpty()) return null;
+        return session.getParticipants().get(0).getShelfBook().getBook().getId();
+    }
+
+    default String getBookTitle(Session session) {
+        if (session.getParticipants().isEmpty()) return null;
+        return session.getParticipants().get(0).getShelfBook().getBook().getName();
+    }
+
+    default String getBookCoverUrl(Session session) {
+        if (session.getParticipants().isEmpty()) return null;
+        return session.getParticipants().get(0).getShelfBook().getBook().getCoverUrl();
+    }
 }

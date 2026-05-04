@@ -3,6 +3,7 @@ package ch.uzh.ifi.hase.soprafs26.controller;
 import ch.uzh.ifi.hase.soprafs26.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendRequestGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendshipGetDTO;
 import ch.uzh.ifi.hase.soprafs26.service.FriendService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -80,4 +81,5 @@ public class FriendRequestController {
         FriendRequest rejectFriendRequest = friendService.rejectFriendRequest(requestId, userId);
         return DTOMapper.INSTANCE.convertFriendRequestToGetDTO(rejectFriendRequest);
     }
+
 }
