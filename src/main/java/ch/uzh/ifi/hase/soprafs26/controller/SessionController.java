@@ -68,11 +68,5 @@ public class SessionController {
             @PathVariable Long sessionId,
             @RequestBody SessionLeavePostDTO dto) {
         sessionService.leaveSession(sessionId, userId, dto.getShelfBookId(), dto.getPagesRead());
-    }
-    @GetMapping("/users/{userid}/session-requests")
-    @ResponseStatus(HttpStatus.OK)
-    public String getMethodName(@RequestParam String param) {
-        return new String();
-    }
-    
+    }    
 }
