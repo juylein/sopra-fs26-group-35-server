@@ -31,6 +31,7 @@ public interface DTOMapper {
                     UserGetDTO d = new UserGetDTO();
                     d.setId(f.getId());
                     d.setUsername(f.getUsername());
+                    d.setBio(f.getBio());
                     return d;
                 })
                 .toList()

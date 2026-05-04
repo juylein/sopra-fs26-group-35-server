@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/users/{userId}/sessions")
@@ -66,4 +69,10 @@ public class SessionController {
             @RequestBody SessionLeavePostDTO dto) {
         sessionService.leaveSession(sessionId, userId, dto.getShelfBookId(), dto.getPagesRead());
     }
+    @GetMapping("/users/{userid}/session-requests")
+    @ResponseStatus(HttpStatus.OK)
+    public String getMethodName(@RequestParam String param) {
+        return new String();
+    }
+    
 }
