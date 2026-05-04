@@ -185,7 +185,6 @@ public class UserService {
         userRepository.flush();
 	}
 
-
     public void update(Long id, String newPassword, String newBio, List<String> newGenres) {
         String currentUserToken = (String) SecurityContextHolder.getContext().getAuthentication().getCredentials();
         Optional<User> optionalUser = userRepository.findById(id);
