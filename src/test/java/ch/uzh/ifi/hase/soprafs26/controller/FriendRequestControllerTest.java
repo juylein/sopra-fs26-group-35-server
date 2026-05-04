@@ -5,7 +5,6 @@ import ch.uzh.ifi.hase.soprafs26.SecurityConfig;
 import ch.uzh.ifi.hase.soprafs26.entity.FriendRequest;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendRequestGetDTO;
 import ch.uzh.ifi.hase.soprafs26.service.FriendService;
 
 import ch.uzh.ifi.hase.soprafs26.constant.FriendRequestStatus;
@@ -17,10 +16,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -30,13 +31,18 @@ import java.util.List;
 
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import org.springframework.security.core.Authentication;
 
 @WebMvcTest(FriendRequestController.class)
 @Import(SecurityConfig.class)
@@ -64,28 +70,34 @@ public class FriendRequestControllerTest {
         }).when(authTokenFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class), any(FilterChain.class));
     }
 
+    @AutoConfigureMockMvc(addFilters = false)
+
+
     @Test
-    @WithMockUser
     public void sendFriendRequest_validInput_returnsCreated() throws Exception {
         User requester = new User();
         requester.setId(1L);
         requester.setUsername("requester");
-
+    
+        Authentication auth =
+                new UsernamePasswordAuthenticationToken(requester, null, List.of());
+    
         User recipient = new User();
         recipient.setId(2L);
-        recipient.setUsername("recipient");
 
+    
         FriendRequest friendRequest = new FriendRequest();
         friendRequest.setId(10L);
         friendRequest.setRequester(requester);
         friendRequest.setRecipient(recipient);
         friendRequest.setStatus(FriendRequestStatus.PENDING);
-
-        given(friendService.createFriendRequest(1L, 2L)).willReturn(friendRequest);
-
-        mockMvc.perform(post("/users/1/friend-requests/2")
-                        .header("Authorization", "valid-token")
-                        .contentType(MediaType.APPLICATION_JSON))
+    
+        given(friendService.createFriendRequest(anyLong(), eq(2L)))
+                .willReturn(friendRequest);
+    
+        mockMvc.perform(post("/users/2/friend-requests")
+                .with(authentication(auth))  
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id", is(10)))
                 .andExpect(jsonPath("$.requesterId", is(1)))
@@ -93,6 +105,35 @@ public class FriendRequestControllerTest {
                 .andExpect(jsonPath("$.status", is("PENDING")));
     }
 
+    @Test
+    public void acceptFriendRequest_validRequest_returnsOk() throws Exception {
+
+    User user = new User();
+    user.setId(2L);
+    user.setUsername("recipient");
+
+    Authentication auth =
+            new UsernamePasswordAuthenticationToken(user, null, List.of());
+
+    User requester = new User();
+    requester.setId(1L);
+
+    FriendRequest friendRequest = new FriendRequest();
+    friendRequest.setId(20L);
+    friendRequest.setRequester(requester);
+    friendRequest.setRecipient(user);
+    friendRequest.setStatus(FriendRequestStatus.ACCEPTED);
+
+    given(friendService.acceptFriendRequest(20L, 2L))
+            .willReturn(friendRequest);
+
+    mockMvc.perform(put("/friend-requests/20/accept")
+            .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication(auth))
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status", is("ACCEPTED")))
+            .andExpect(jsonPath("$.id", is(20)));
+}
     @Test
     @WithMockUser
     public void getIncomingFriendRequests_returnsList() throws Exception {
@@ -143,33 +184,6 @@ public class FriendRequestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id", is(12)))
                 .andExpect(jsonPath("$[0].requesterId", is(1)));
-    }
-
-    @Test
-    @WithMockUser
-    public void acceptFriendRequest_validRequest_returnsOk() throws Exception {
-        User requester = new User();
-        requester.setId(1L);
-        requester.setUsername("requester");
-
-        User recipient = new User();
-        recipient.setId(2L);
-        recipient.setUsername("recipient");
-
-        FriendRequest friendRequest = new FriendRequest();
-        friendRequest.setId(20L);
-        friendRequest.setRequester(requester);
-        friendRequest.setRecipient(recipient);
-        friendRequest.setStatus(FriendRequestStatus.ACCEPTED);
-
-        given(friendService.acceptFriendRequest(20L, 2L)).willReturn(friendRequest);
-
-        mockMvc.perform(put("/friend-requests/20/accept")
-                        .param("userId", "2")
-                        .header("Authorization", "valid-token"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status", is("ACCEPTED")))
-                .andExpect(jsonPath("$.id", is(20)));
     }
 
     @Test
