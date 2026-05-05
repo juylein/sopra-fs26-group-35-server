@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -57,12 +58,12 @@ public class LeaderboardServiceTest {
 
     @Test
     void getLeaderboards_noLimit_returnsAll() {
-        when(leaderboardRepository.findAll()).thenReturn(List.of(entryA, entryB));
+        when(leaderboardRepository.findAll(Sort.unsorted())).thenReturn(List.of(entryA, entryB));
 
         List<Leaderboard> result = leaderboardService.getLeaderboards(null);
 
         assertEquals(2, result.size());
-        verify(leaderboardRepository, times(1)).findAll();
+        verify(leaderboardRepository, times(1)).findAll(Sort.unsorted());
         verify(leaderboardRepository, never()).findAll(any(Pageable.class));
     }
 
@@ -80,7 +81,7 @@ public class LeaderboardServiceTest {
 
     @Test
     void getLeaderboards_emptyBoard_returnsEmptyList() {
-        when(leaderboardRepository.findAll()).thenReturn(List.of());
+        when(leaderboardRepository.findAll(Sort.unsorted())).thenReturn(List.of());
 
         List<Leaderboard> result = leaderboardService.getLeaderboards(null);
 

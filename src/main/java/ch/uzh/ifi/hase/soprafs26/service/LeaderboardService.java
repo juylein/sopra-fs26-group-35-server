@@ -43,7 +43,7 @@ public class LeaderboardService {
 		Pageable topLimit = PageRequest.of(0, top.intValue(), Sort.by("totalPoints").descending());
 		return leaderboardRepository.findAll(topLimit).getContent();
 		}
-		else return this.leaderboardRepository.findAll();
+		else return this.leaderboardRepository.findAll(Sort.unsorted());
 	}
 
 	public Leaderboard getLeaderboardByUser(User user) {
