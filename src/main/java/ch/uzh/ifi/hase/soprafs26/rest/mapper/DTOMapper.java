@@ -64,6 +64,8 @@ public interface DTOMapper {
     @Mapping(source = "user.pagesRead", target = "pagesRead")
     @Mapping(source = "user.numFriends", target = "numFriends")
     @Mapping(source = "leaderboard.totalPoints", target = "totalPoints")
+    @Mapping(source = "leaderboard.readingPoints", target = "readingPoints")
+    @Mapping(source = "leaderboard.quizzPoints", target = "quizzPoints")
     UserStatsGetDTO convertToUserStatsGetDTO(User user, Leaderboard leaderboard);
 
     @Mapping(source = "id", target = "id")
