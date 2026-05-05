@@ -204,4 +204,18 @@ public class LibraryService {
 
         shelfRepository.delete(shelf);
     }
+
+    public void renameShelf(Long userId, Long shelfId, String newName) {
+        User user = getAuthenticatedUser(userId);
+
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+
+        if (!shelf.getOwner().getId().equals(user.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        shelf.setName(newName);
+        shelfRepository.save(shelf);
+    }
 }

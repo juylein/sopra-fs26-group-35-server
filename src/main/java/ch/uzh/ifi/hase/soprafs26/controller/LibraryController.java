@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPutDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -73,5 +74,14 @@ public class LibraryController {
                                     @PathVariable Long shelfId, 
                                     @PathVariable String bookId){
         libraryService.deleteBookfromShelf(shelfId, bookId, userId);
+    }
+
+    @PutMapping("/shelves/{shelfId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void renameShelf(
+            @PathVariable Long userId,
+            @PathVariable Long shelfId,
+            @RequestBody ShelfPutDTO shelfPutDTO) {
+        libraryService.renameShelf(userId, shelfId, shelfPutDTO.getName());
     }
 }
