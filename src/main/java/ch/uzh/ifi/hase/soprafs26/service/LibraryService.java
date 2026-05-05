@@ -62,8 +62,16 @@ public class LibraryService {
         return user;
     }
 
+    private User getUser(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User with id " + userId + " not found"));
+
+        // TODO check if user is the authenticated or a friend of the authenticated
+        return user;
+    }
+
     public List<Shelf> getLibrary(Long userId) {
-        User user = getAuthenticatedUser(userId);
+        User user = getUser(userId);
         return user.getShelves();
     }
 

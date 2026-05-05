@@ -1,14 +1,16 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.entity.FriendRequest;
+import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendRequestGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendshipGetDTO;
 import ch.uzh.ifi.hase.soprafs26.service.FriendService;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.ArrayList;
 
 @RestController
@@ -19,15 +21,18 @@ public class FriendRequestController {
     FriendRequestController(FriendService friendService) {
         this.friendService = friendService;
     }
-
-    @PostMapping("/users/{requesterId}/friend-requests/{recipientId}")
+    @PostMapping("/users/{recipientId}/friend-requests")
     @ResponseStatus(HttpStatus.CREATED)
     public FriendRequestGetDTO sendFriendRequest(
-            @PathVariable Long requesterId,
-            @PathVariable Long recipientId
+            @PathVariable Long recipientId,
+            Authentication authentication
     ) {
-        FriendRequest friend_request = friendService.createFriendRequest(requesterId, recipientId);
-        return DTOMapper.INSTANCE.convertFriendRequestToGetDTO(friend_request);
+        User requester = (User) authentication.getPrincipal();
+    
+        FriendRequest friendRequest =
+                friendService.createFriendRequest(requester.getId(), recipientId);
+    
+        return DTOMapper.INSTANCE.convertFriendRequestToGetDTO(friendRequest);
     }
 
     @GetMapping("/users/{userId}/friend-requests/incoming")
@@ -59,10 +64,12 @@ public class FriendRequestController {
     @ResponseStatus(HttpStatus.OK)
     public FriendRequestGetDTO acceptFriendRequest(
             @PathVariable Long requestId,
-            @RequestParam Long userId
+            Authentication authentication
     ) {
-        FriendRequest acceptFriendRequest = friendService.acceptFriendRequest(requestId, userId);
-        return DTOMapper.INSTANCE.convertFriendRequestToGetDTO(acceptFriendRequest);
+        User user = (User) authentication.getPrincipal();
+    
+        FriendRequest result = friendService.acceptFriendRequest(requestId, user.getId());
+        return DTOMapper.INSTANCE.convertFriendRequestToGetDTO(result);
     }
 
     @PutMapping("/friend-requests/{requestId}/reject")
@@ -74,4 +81,5 @@ public class FriendRequestController {
         FriendRequest rejectFriendRequest = friendService.rejectFriendRequest(requestId, userId);
         return DTOMapper.INSTANCE.convertFriendRequestToGetDTO(rejectFriendRequest);
     }
+
 }
