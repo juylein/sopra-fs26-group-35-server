@@ -10,6 +10,8 @@ public class SessionGetDTO {
     private String bookId;
     private String bookTitle;
     private String coverUrl;
+    private Long shelfBookId;
+    private Long pagesRead;
 
 	public Long getId() {
 		return id;
@@ -45,4 +47,10 @@ public class SessionGetDTO {
 
     public String getCoverUrl() { return coverUrl; }
     public void setCoverUrl(String coverUrl) { this.coverUrl = coverUrl; }
+
+    public Long getShelfBookId() { return shelfBookId; }
+    public void setShelfBookId(Long shelfBookId) { this.shelfBookId = shelfBookId; }
+
+    public Long getPagesRead() { return pagesRead; }
+    public void setPagesRead(Long pagesRead) { this.pagesRead = pagesRead; }
 }
