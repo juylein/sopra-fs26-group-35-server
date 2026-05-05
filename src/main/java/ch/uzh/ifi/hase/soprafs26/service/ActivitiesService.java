@@ -24,6 +24,7 @@ import ch.uzh.ifi.hase.soprafs26.service.UserService;
 
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.time.LocalDateTime;
@@ -62,14 +63,10 @@ public class ActivitiesService {
 
 	public List<Activities> getAllActivities(User user) {
 		List<Friendships> friendships = friendshipsRepository.findByUserA_Id(user.getId());
-		List<User> friends = friendships.stream()
-			.map(f-> {if (f.getUserA().equals(user)){
-				return f.getUserB();
-			} else {
-				return f.getUserA();
-			}
-		}).toList();
-		friends.add(user); 
+		List<User> friends = new ArrayList<>(friendships.stream()
+			.map(f -> f.getUserA().equals(user) ? f.getUserB() : f.getUserA())
+			.toList());
+		friends.add(user);
 
 		return activitiesRepository.findAllByUserIn(friends);
 	}
