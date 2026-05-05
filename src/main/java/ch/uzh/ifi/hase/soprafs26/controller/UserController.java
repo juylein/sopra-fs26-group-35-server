@@ -17,9 +17,11 @@ import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs26.service.UserService;
 import ch.uzh.ifi.hase.soprafs26.service.LeaderboardService;
 import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
+import ch.uzh.ifi.hase.soprafs26.service.FriendService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * User Controller
@@ -34,14 +36,17 @@ public class UserController {
 	private final UserService userService;
 	private final LeaderboardService leaderboardService;
 	private final ActivitiesService activitiesService;
+	private final FriendService friendService;
 
 	UserController(UserService userService, 
 				   LeaderboardService leaderboardService,
-				   ActivitiesService activitiesService
+				   ActivitiesService activitiesService,
+				   FriendService friendService
 				) {
 		this.userService = userService;
 		this.leaderboardService = leaderboardService;
 		this.activitiesService = activitiesService;
+		this.friendService = friendService;
 	}
 
 	@GetMapping("/users")
@@ -88,12 +93,19 @@ public class UserController {
 		userService.logoutUser(userId);
 	}
 
+	@GetMapping("/users/{userId}")
+	@ResponseStatus(HttpStatus.OK) 
+	@ResponseBody 
+	public UserGetDTO getUserById(@PathVariable("userId") Long id) { 
+		User user = userService.getUser(id); 
+		return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
+	}
 
-    @GetMapping("/users/{userId}")
+	@GetMapping("/users/friends/{username}")
     @ResponseStatus(HttpStatus.OK)
     @ResponseBody
-    public UserGetDTO getUserById(@PathVariable("userId") Long id) {
-        User user = userService.getUser(id);
+    public UserGetDTO getUserByUsername(@PathVariable("username") String username) {
+        User user = userService.getUserByUsername(username);
         return DTOMapper.INSTANCE.convertEntityToUserGetDTO(user);
     }
 
@@ -161,6 +173,17 @@ public class UserController {
             dto.getBio(),
             dto.getGenres()
     );
+	}
+
+	@GetMapping("/users/{userId}/friends")
+    @ResponseStatus(HttpStatus.OK)
+	public List<UserGetDTO> getFriends(@PathVariable Long userId) {
+
+		List<User> friends = friendService.getFriends(userId);
+
+		return friends.stream()
+				.map(DTOMapper.INSTANCE::convertEntityToUserGetDTO)
+				.collect(Collectors.toList());
 	}
 }
 

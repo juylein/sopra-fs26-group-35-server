@@ -5,28 +5,6 @@ import ch.uzh.ifi.hase.soprafs26.rest.dto.*;
 import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
-import ch.uzh.ifi.hase.soprafs26.entity.Book;
-import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
-import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
-import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
-import ch.uzh.ifi.hase.soprafs26.entity.User;
-import ch.uzh.ifi.hase.soprafs26.entity.Activities;
-import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
-import ch.uzh.ifi.hase.soprafs26.entity.Session;
-import ch.uzh.ifi.hase.soprafs26.entity.FriendRequest;
-
-import ch.uzh.ifi.hase.soprafs26.rest.dto.ActivitiesGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.FriendRequestGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookPutDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.UserGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
-
 import java.util.List;
 
 /**
@@ -45,6 +23,21 @@ public interface DTOMapper {
 
     DTOMapper INSTANCE = Mappers.getMapper(DTOMapper.class);
 
+    @AfterMapping
+    default void customizeUserMapping(User user, @MappingTarget UserGetDTO dto) {
+        dto.setFriends(
+            user.getFriends().stream()
+                .map(f -> {
+                    UserGetDTO d = new UserGetDTO();
+                    d.setId(f.getId());
+                    d.setUsername(f.getUsername());
+                    d.setBio(f.getBio());
+                    return d;
+                })
+                .toList()
+        );
+    }
+
     @Mapping(source = "name", target = "name")
     @Mapping(source = "username", target = "username")
     @Mapping(source = "bio", target = "bio")
@@ -62,6 +55,7 @@ public interface DTOMapper {
     @Mapping(source = "token", target = "token")
     @Mapping(source = "genres", target = "genres")
     @Mapping(source = "creationDate", target = "creationDate")
+    @Mapping(target = "friends", ignore = true)
     UserGetDTO convertEntityToUserGetDTO(User user);
 
     @Mapping(source = "user.id", target = "id")
@@ -112,6 +106,9 @@ public interface DTOMapper {
     @Mapping(source = "id", target = "id")
     @Mapping(source = "startTime", target = "startTime")
     @Mapping(source = "endTime", target = "endTime")
+    @Mapping(target = "bookId", expression = "java(getBookId(session))")
+    @Mapping(target = "bookTitle", expression = "java(getBookTitle(session))")
+    @Mapping(target = "coverUrl", expression = "java(getBookCoverUrl(session))")
     SessionGetDTO convertSessionToGetDTO(Session session);
 
     @Mapping(source = "id", target = "id")
@@ -138,4 +135,27 @@ public interface DTOMapper {
     @Mapping(source = "createdAt", target = "createdAt")
     @Mapping(source = "resolvedAt", target = "resolvedAt")
     FriendRequestGetDTO convertFriendRequestToGetDTO(FriendRequest friend_request);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "userA", target = "userA")
+    @Mapping(source = "userB", target = "userB")
+    @Mapping(source = "since", target = "since")
+    FriendshipGetDTO convertFriendshipToGetDTO(Friendships friend_request);
+
+
+    // Helper Methods to extract the values manually as Session doesn't have bookId/bookTitle/coverUrl as direct fields (nested inside a List)
+    default String getBookId(Session session) {
+        if (session.getParticipants().isEmpty()) return null;
+        return session.getParticipants().get(0).getShelfBook().getBook().getId();
+    }
+
+    default String getBookTitle(Session session) {
+        if (session.getParticipants().isEmpty()) return null;
+        return session.getParticipants().get(0).getShelfBook().getBook().getName();
+    }
+
+    default String getBookCoverUrl(Session session) {
+        if (session.getParticipants().isEmpty()) return null;
+        return session.getParticipants().get(0).getShelfBook().getBook().getCoverUrl();
+    }
 }

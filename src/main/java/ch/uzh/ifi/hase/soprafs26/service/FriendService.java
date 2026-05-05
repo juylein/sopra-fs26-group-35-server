@@ -17,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -168,4 +169,17 @@ public class FriendService {
 
         return reverse.isPresent() && reverse.get().getStatus() == FriendRequestStatus.PENDING;
     }
+
+    public List<User> getFriends(Long userId) {
+
+    List<Friendships> friendships = friendshipsRepository.findByUserA_Id(userId);
+
+    List<User> friends = new ArrayList<>();
+
+    for (Friendships f : friendships) {
+        friends.add(f.getUserB());
+    }
+
+    return friends;
+}
 }

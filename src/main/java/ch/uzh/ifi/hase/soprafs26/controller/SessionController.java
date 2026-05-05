@@ -10,6 +10,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 @RestController
 @RequestMapping("/users/{userId}/sessions")
@@ -65,5 +68,12 @@ public class SessionController {
             @PathVariable Long sessionId,
             @RequestBody SessionLeavePostDTO dto) {
         sessionService.leaveSession(sessionId, userId, dto.getShelfBookId(), dto.getPagesRead());
+    }
+
+    @GetMapping("/latest")
+    @ResponseStatus(HttpStatus.OK)
+    public SessionGetDTO getLatestSession(@PathVariable Long userId) {
+        Session session = sessionService.getLatestSessionForUser(userId);
+        return DTOMapper.INSTANCE.convertSessionToGetDTO(session);
     }
 }

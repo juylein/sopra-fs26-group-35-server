@@ -26,6 +26,7 @@ import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
 import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
 import ch.uzh.ifi.hase.soprafs26.service.UserService;
 import ch.uzh.ifi.hase.soprafs26.service.LeaderboardService;
+import ch.uzh.ifi.hase.soprafs26.service.FriendService;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -73,6 +74,9 @@ public class UserControllerTest {
 
 	@MockitoBean
 	private ActivitiesService activitiesService;
+
+	@MockitoBean
+	private FriendService friendService;
 
     @MockitoBean
     @Qualifier("userRepository")

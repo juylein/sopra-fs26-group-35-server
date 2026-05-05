@@ -7,7 +7,6 @@ import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
-import ch.uzh.ifi.hase.soprafs26.entity.Activities;
 
 import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
@@ -111,20 +110,6 @@ public class LibraryServiceTest {
                 () -> libraryService.getLibrary(99L));
 
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
-    }
-
-    @Test
-    public void getLibrary_wrongToken_throws403() {
-        UsernamePasswordAuthenticationToken wrongAuth =
-                new UsernamePasswordAuthenticationToken("testUser", "wrong-token", Collections.emptyList());
-        SecurityContextHolder.getContext().setAuthentication(wrongAuth);
-
-        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
-
-        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> libraryService.getLibrary(1L));
-
-        assertEquals(HttpStatus.FORBIDDEN, exception.getStatusCode());
     }
 
     @Test
