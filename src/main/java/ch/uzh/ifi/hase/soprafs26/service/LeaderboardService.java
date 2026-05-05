@@ -39,11 +39,12 @@ public class LeaderboardService {
 	}
 
 	public List<Leaderboard> getLeaderboards(Long top) {
+		Sort sort = Sort.by(Sort.Direction.DESC,"totalPoints");
 		if (top != null){
-		Pageable topLimit = PageRequest.of(0, top.intValue(), Sort.by("totalPoints").descending());
+		Pageable topLimit = PageRequest.of(0, top.intValue(), sort);
 		return leaderboardRepository.findAll(topLimit).getContent();
 		}
-		else return this.leaderboardRepository.findAll();
+		else return this.leaderboardRepository.findAll(sort);
 	}
 
 	public Leaderboard getLeaderboardByUser(User user) {
