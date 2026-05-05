@@ -5,13 +5,19 @@ import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ReviewPostDTO;
 import ch.uzh.ifi.hase.soprafs26.service.BookService;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,12 +26,18 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
 @WebMvcTest(BookController.class)
 @Import(SecurityConfig.class)
@@ -40,6 +52,15 @@ public class BookControllerTest {
     @MockitoBean
     @Qualifier("userRepository")
     private UserRepository userRepository;
+
+    private String asJsonString(final Object object) {
+        try {
+            return new ObjectMapper().writeValueAsString(object);
+        } catch (JacksonException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    String.format("The request body could not be created.%s", e.toString()));
+        }
+    }
 
     @Test
     @WithMockUser
@@ -118,6 +139,82 @@ public class BookControllerTest {
     @Test
     public void getReviewsForBook_noAuth_returns401() throws Exception {
         mockMvc.perform(get("/books/abc123/reviews")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void createReview_validInput_returnsCreated() throws Exception {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+        user.setToken("token");
+
+        Reviews review = new Reviews();
+        review.setId(1L);
+        review.setRating(5);
+        review.setReview("Great Book!");
+        review.setUser(user);
+
+        ReviewPostDTO reviewPostDTO = new ReviewPostDTO();
+        reviewPostDTO.setReview("Great Book!");
+        reviewPostDTO.setRating(5);
+
+        given(userRepository.findByToken("token")).willReturn(user);
+        given(bookService.createReview(any(), eq("abc123"), any())).willReturn(review);
+
+        mockMvc.perform(post("/books/abc123/reviews")
+                        .header("Authorization", "token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(reviewPostDTO)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.rating", is(5)));
+    }
+
+    @Test
+    public void createReview_bookNotFound_returns404() throws Exception{
+        ReviewPostDTO reviewPostDTO = new ReviewPostDTO();
+        reviewPostDTO.setRating(5);
+        reviewPostDTO.setReview("Great book!");
+
+        User user = new User();
+        user.setToken("token");
+
+        given(userRepository.findByToken("token")).willReturn(user);
+        given(bookService.createReview(any(), any(), any()))
+        .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "book not found"));
+
+        mockMvc.perform(post("/books/abc123/reviews")
+                        .header("Authorization", "token")
+                        .content(asJsonString(reviewPostDTO))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+
+    }
+
+    @Test
+    public void createReview_duplicateReview_returns409() throws Exception{
+        ReviewPostDTO reviewPostDTO = new ReviewPostDTO();
+        reviewPostDTO.setRating(5);
+        reviewPostDTO.setReview("Great book!");
+
+        User user = new User();
+        user.setToken("token");
+
+        given(userRepository.findByToken("token")).willReturn(user);
+        given(bookService.createReview(any(), any(), any()))
+                .willThrow(new ResponseStatusException(HttpStatus.CONFLICT, "User has already reviewed this book"));
+
+        mockMvc.perform(post("/books/abc123/reviews")
+                        .header("Authorization", "token")
+                        .content(asJsonString(reviewPostDTO))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
+        }
+
+    @Test
+    public void createReview_noAuth_returns401() throws Exception {
+        mockMvc.perform(post("/books/abc123/reviews")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isUnauthorized());
     }
