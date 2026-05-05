@@ -14,4 +14,5 @@ import java.util.List;
 public interface ReviewsRepository extends JpaRepository<Reviews, Long> {
 	List<Reviews> findByUser(User user);
 	List<Reviews> findByBook(Book book);
+	Reviews findByUserAndBook(User user, Book book);
 }
