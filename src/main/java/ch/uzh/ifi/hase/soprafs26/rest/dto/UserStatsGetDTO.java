@@ -8,6 +8,8 @@ public class UserStatsGetDTO {
 	private Long booksRead;
 	private Long pagesRead;
 	private Long numFriends;
+	private Long readingPoints;
+	private Long quizzPoints;
 
 	public Long getId() {
 		return id;
@@ -55,5 +57,21 @@ public class UserStatsGetDTO {
 
 	public void setNumFriends(Long numFriends){
 		this.numFriends = numFriends;
+	}
+
+	public Long getReadingPoints() {
+		return readingPoints;
+	}
+
+	public void setReadingPoints(Long readingPoints) {
+		this.readingPoints = readingPoints;
+	}
+
+	public Long getQuizzPoints() {
+		return quizzPoints;
+	}
+
+	public void setQuizzPoints(Long quizzPoints) {
+		this.quizzPoints = quizzPoints;
 	}
 }
