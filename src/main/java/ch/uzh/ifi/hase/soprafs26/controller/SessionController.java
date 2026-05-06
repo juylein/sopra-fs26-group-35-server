@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
@@ -74,6 +73,18 @@ public class SessionController {
     @ResponseStatus(HttpStatus.OK)
     public SessionGetDTO getLatestSession(@PathVariable Long userId) {
         Session session = sessionService.getLatestSessionForUser(userId);
-        return DTOMapper.INSTANCE.convertSessionToGetDTO(session);
+        SessionGetDTO sessionGetDTO = DTOMapper.INSTANCE.convertSessionToGetDTO(session);
+
+        session.getParticipants().stream()
+                .filter(p -> p.getUser().getId().equals(userId))
+                .findFirst()
+                .ifPresent(p -> {
+                    sessionGetDTO.setBookTitle(p.getShelfBook().getBook().getName());
+                    sessionGetDTO.setCoverUrl(p.getShelfBook().getBook().getCoverUrl());
+                    sessionGetDTO.setShelfBookId(p.getShelfBook().getId());
+                    sessionGetDTO.setPagesRead(p.getPagesRead());
+                });
+
+        return sessionGetDTO;
     }
 }

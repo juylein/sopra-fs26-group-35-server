@@ -173,8 +173,8 @@ public class SessionService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this user's sessions");
         }
 
-        return sessionRepository.findLatestSoloSessionForUser(userId)
+        return sessionRepository.findLatestSessionForUser(userId)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "No solo sessions found for user " + userId));
+                        HttpStatus.NOT_FOUND, "No completed sessions found for user " + userId));
     }
 }

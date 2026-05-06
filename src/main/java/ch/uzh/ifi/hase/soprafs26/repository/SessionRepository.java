@@ -16,13 +16,12 @@ public interface SessionRepository extends JpaRepository<Session, Long> {
     List<Session> findByEndTimeBefore(LocalDateTime cutoff);
 
     @Query("""
-        SELECT s FROM Session s
-        JOIN s.participants p
-        WHERE p.user.id = :userId
-        AND s.end_time IS NOT NULL
-        AND (SELECT COUNT(sp) FROM SessionParticipant sp WHERE sp.session = s) = 1
-        ORDER BY s.id DESC
-        LIMIT 1
-    """)
-    Optional<Session> findLatestSoloSessionForUser(@Param("userId") Long userId);
+    SELECT s FROM Session s
+    JOIN s.participants p
+    WHERE p.user.id = :userId
+    AND s.end_time IS NOT NULL
+    ORDER BY s.end_time DESC
+    LIMIT 1
+""")
+    Optional<Session> findLatestSessionForUser(@Param("userId") Long userId);
 }
