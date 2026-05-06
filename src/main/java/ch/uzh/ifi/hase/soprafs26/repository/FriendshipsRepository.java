@@ -11,4 +11,5 @@ import java.util.List;
 @Repository("friendshipsRepository")
 public interface FriendshipsRepository extends JpaRepository<Friendships, Long> {
 	List<Friendships> findByUserA_Id(Long userId);
+    List<Friendships> findByUserB_Id(Long userId);
 }

@@ -34,7 +34,7 @@ public class Leaderboard implements Serializable {
 	private Long readingPoints;
 
 	@Column(nullable = true)
-	private Long quizzPoints;
+	private Long quizPoints;
 
 	@Column(nullable = false)
 	private Long totalPoints;
@@ -67,15 +67,15 @@ public class Leaderboard implements Serializable {
 		updateTotalPoints();
 	}
 
-	public Long getQuizzPoints() {
-		return quizzPoints;
+	public Long getQuizPoints() {
+		return quizPoints;
 	}
 
-	public void addQuizzPoints(Long quizzPoints) {
-		if (this.quizzPoints == null){
-			this.quizzPoints = 0L;
+	public void addQuizPoints(Long quizPoints) {
+		if (this.quizPoints == null){
+			this.quizPoints = 0L;
 		}
-		this.quizzPoints += quizzPoints;
+		this.quizPoints += quizPoints;
 		updateTotalPoints();
 	}
 
@@ -89,7 +89,7 @@ public class Leaderboard implements Serializable {
 
 	public void updateTotalPoints() {
 		long reading = (readingPoints != null) ? readingPoints : 0;
-		long quizz = (quizzPoints != null) ? quizzPoints : 0;
-		this.totalPoints = reading + quizz;
+		long quiz = (quizPoints != null) ? quizPoints : 0;
+		this.totalPoints = reading + quiz;
 	}
 }

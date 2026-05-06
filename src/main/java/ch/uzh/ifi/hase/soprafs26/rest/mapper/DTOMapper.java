@@ -65,7 +65,7 @@ public interface DTOMapper {
     @Mapping(source = "user.numFriends", target = "numFriends")
     @Mapping(source = "leaderboard.totalPoints", target = "totalPoints")
     @Mapping(source = "leaderboard.readingPoints", target = "readingPoints")
-    @Mapping(source = "leaderboard.quizzPoints", target = "quizzPoints")
+    @Mapping(source = "leaderboard.quizPoints", target = "quizPoints")
     UserStatsGetDTO convertToUserStatsGetDTO(User user, Leaderboard leaderboard);
 
     @Mapping(source = "id", target = "id")
@@ -145,4 +145,23 @@ public interface DTOMapper {
     @Mapping(source = "userB", target = "userB")
     @Mapping(source = "since", target = "since")
     FriendshipGetDTO convertFriendshipToGetDTO(Friendships friend_request);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "title", target = "title")
+    @Mapping(source = "difficulty", target = "difficulty")
+    @Mapping(source = "bookId", target = "bookId")
+    @Mapping(source = "createdBy.id", target = "createdById")
+    @Mapping(source = "createdBy.username", target = "createdByUsername")
+    @Mapping(source = "createdAt", target = "createdAt")
+    @Mapping(target = "questions", ignore = true)
+    QuizGetDTO convertQuizEntityToQuizGetDTO(Quiz quiz);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "questionText", target = "questionText")
+    @Mapping(source = "option1", target = "option1")
+    @Mapping(source = "option2", target = "option2")
+    @Mapping(source = "option3", target = "option3")
+    @Mapping(source = "option4", target = "option4")
+    @Mapping(source = "correctOption", target = "correctOption")
+    QuizQuestionDTO convertQuizQuestionEntityToQuizQuestionDTO(QuizQuestion question);
 }

@@ -171,15 +171,18 @@ public class FriendService {
     }
 
     public List<User> getFriends(Long userId) {
+        List<Friendships> asUserA = friendshipsRepository.findByUserA_Id(userId);
+        List<Friendships> asUserB = friendshipsRepository.findByUserB_Id(userId);
 
-    List<Friendships> friendships = friendshipsRepository.findByUserA_Id(userId);
+        List<User> friends = new ArrayList<>();
 
-    List<User> friends = new ArrayList<>();
+        for (Friendships f : asUserA) {
+            friends.add(f.getUserB());
+        }
+        for (Friendships f : asUserB) {
+            friends.add(f.getUserA());
+        }
 
-    for (Friendships f : friendships) {
-        friends.add(f.getUserB());
+        return friends;
     }
-
-    return friends;
-}
 }
