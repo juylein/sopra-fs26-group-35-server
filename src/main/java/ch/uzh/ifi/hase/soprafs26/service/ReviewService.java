@@ -63,4 +63,20 @@ public class ReviewService {
 
         reviewsRepository.delete(review);
     }
+
+    public Reviews getReview(Long userId, Long reviewId){
+        User user = (User) SecurityContextHolder.getContext()
+              .getAuthentication()
+              .getPrincipal();
+
+        if (!user.getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this review");
+        } 
+
+        Reviews review = reviewsRepository.findById(reviewId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
+
+        return review;
+    }
+
 }

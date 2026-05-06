@@ -2,6 +2,7 @@ package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.SecurityConfig;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ReviewPostDTO;
 import ch.uzh.ifi.hase.soprafs26.service.ReviewService;
@@ -15,16 +16,20 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReviewController.class)
@@ -166,6 +171,60 @@ public class ReviewControllerTest {
     @Test
     public void deleteReview_noAuth_returns401() throws Exception {
         mockMvc.perform(delete("/users/1/reviews/1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void getReview_validInput_returnsReview() throws Exception {
+        
+        User user = new User();
+        user.setToken("token");
+
+        given(userRepository.findByToken("token")).willReturn(user);
+        
+        Reviews review = new Reviews();
+        review.setReview("Great book!");
+
+        given(reviewService.getReview(1L, 1L)).willReturn(review);
+
+        mockMvc.perform(get("/users/1/reviews/1")
+                    .header("Authorization", "token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.review", is("Great book!")));
+        }
+    
+
+    @Test
+    public void getReview_noReview_returns404() throws Exception {
+        User user = new User();
+        user.setToken("token");
+
+        given(userRepository.findByToken("token")).willReturn(user);
+        given(reviewService.getReview(1L, 99L))
+            .willThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
+
+        mockMvc.perform(get("/users/1/reviews/99")
+                    .header("Authorization", "token"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void getReview_notOwner_returns403() throws Exception {
+        User user = new User();
+        user.setToken("token");
+
+        given(userRepository.findByToken("token")).willReturn(user);
+        given(reviewService.getReview(1L,1L))
+            .willThrow(new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to access this review"));
+
+        mockMvc.perform(get("/users/1/reviews/1")
+                        .header("Authorization", "token"))
+                    .andExpect(status().isForbidden());         
+    }
+
+    @Test
+    public void getReview_noAuth_returns401() throws Exception {
+        mockMvc.perform(get("/users/1/reviews/1"))
                 .andExpect(status().isUnauthorized());
     }
 }
