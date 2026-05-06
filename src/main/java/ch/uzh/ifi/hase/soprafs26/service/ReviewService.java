@@ -44,4 +44,23 @@ public class ReviewService {
         review.setReview(reviewPostDTO.getReview());
         reviewsRepository.save(review);
     }
+
+    public void deleteReview(Long userId, Long reviewId){
+        User user = (User) SecurityContextHolder.getContext()
+              .getAuthentication()
+              .getPrincipal();
+
+        if (!user.getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this review");
+        } 
+
+        Reviews review = reviewsRepository.findById(reviewId)
+              .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Review not found"));
+        
+        if (!review.getUser().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this review");
+        }
+
+        reviewsRepository.delete(review);
+    }
 }

@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,5 +26,11 @@ public class ReviewController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void editReview(@PathVariable Long userId, @PathVariable Long reviewId, @RequestBody ReviewPostDTO reviewPostDTO) {
         reviewService.editReview(userId, reviewId, reviewPostDTO);
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteReview(@PathVariable Long userId, @PathVariable Long reviewId){
+        reviewService.deleteReview(userId, reviewId);
     }
 }
