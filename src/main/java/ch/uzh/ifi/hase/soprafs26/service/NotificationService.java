@@ -2,20 +2,28 @@ package ch.uzh.ifi.hase.soprafs26.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import ch.uzh.ifi.hase.soprafs26.constant.NotificationEventType;
 import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
 import ch.uzh.ifi.hase.soprafs26.entity.Notifications;
+import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.repository.NotificationRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.NotificationEvent;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.NotificationGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookGetDTO;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 /**
  * Notification Service
@@ -32,17 +40,61 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public NotificationService(
             NotificationRepository notificationRepository,
-            UserRepository userRepository
+            UserRepository userRepository,
+            SimpMessagingTemplate messagingTemplate
     ) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
-    public Notifications createNotification(Long recipientId, NotificationType type,
-                                            String message, Long referenceId) {
+    public void sendSessionInvite(Long sessionId, Long senderId, Long recipientId)
+    {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("from", senderId);
+        payload.put("to", recipientId);
+        payload.put("sessionId", sessionId);
+        NotificationEvent event = new NotificationEvent(NotificationEventType.SHARED_SESSION_START, payload);
+        messagingTemplate.convertAndSend("/topic/notifications/" + recipientId, event);
+    }
+
+    public void sendSessionJoin(Long sessionId, Long senderId, Long recipientId, ShelfBookGetDTO shelfBook)
+    {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("from", senderId);
+        payload.put("to", recipientId);
+        payload.put("sessionId", sessionId);
+        payload.put("shelfBook", shelfBook);
+        NotificationEvent event = new NotificationEvent(NotificationEventType.SHARED_SESSION_JOIN, payload);
+        messagingTemplate.convertAndSend("/topic/notifications/" + recipientId, event);
+    }
+
+    public void sendSessionQuit(Long sessionId, Long senderId, Long recipientId)
+    {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("from", senderId);
+        payload.put("to", recipientId);
+        payload.put("sessionId", sessionId);
+        NotificationEvent event = new NotificationEvent(NotificationEventType.SHARED_SESSION_QUIT, payload);
+        messagingTemplate.convertAndSend("/topic/notifications/" + recipientId, event);
+    }
+
+    public void sendSessionChangePage(Long sessionId, Long senderId, Long recipientId, Long numberOfPages)
+    {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("from", senderId);
+        payload.put("to", recipientId);
+        payload.put("sessionId", sessionId);
+        payload.put("numberOfPages", numberOfPages);
+        NotificationEvent event = new NotificationEvent(NotificationEventType.SHARED_SESSION_PAGE, payload);
+        messagingTemplate.convertAndSend("/topic/notifications/" + recipientId, event);
+    }
+
+    public Notifications createNotification(Long recipientId, NotificationType type, String message, Long referenceId) {
         User recipient = userRepository.findById(recipientId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
