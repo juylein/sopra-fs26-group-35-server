@@ -62,7 +62,9 @@ public class ActivitiesService {
 	}
 
 	public List<Activities> getAllActivities(User user) {
-		List<Friendships> friendships = friendshipsRepository.findByUserA_Id(user.getId());
+		List<Friendships> friendships = new ArrayList<>();
+		friendships.addAll(friendshipsRepository.findByUserA_Id(user.getId()));
+		friendships.addAll(friendshipsRepository.findByUserB_Id(user.getId()));
 		List<User> friends = new ArrayList<>(friendships.stream()
 			.map(f -> f.getUserA().equals(user) ? f.getUserB() : f.getUserA())
 			.toList());
@@ -72,7 +74,9 @@ public class ActivitiesService {
 	}
 
 	public List<Activities> getActivitiesByFriend(User user, Long friendId) {
-		List<Friendships> friendships = friendshipsRepository.findByUserA_Id(user.getId());
+		List<Friendships> friendships = new ArrayList<>();
+		friendships.addAll(friendshipsRepository.findByUserA_Id(user.getId()));
+		friendships.addAll(friendshipsRepository.findByUserB_Id(user.getId()));
 		boolean isFriend = friendships.stream()
 		.anyMatch(f ->
 			f.getUserA().getId().equals(friendId) || f.getUserB().getId().equals(friendId));
@@ -89,7 +93,7 @@ public class ActivitiesService {
 		Activities newActivity = new Activities();
 		newActivity.setUser(user);
 		newActivity.setBook(book);
-		newActivity.setDateTime(LocalDateTime.now());
+		newActivity.setTimestamp(LocalDateTime.now());
 
 		if (status == BookStatus.FINISHED){
 			newActivity.setActions("finished reading");

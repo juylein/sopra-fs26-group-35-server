@@ -52,11 +52,11 @@ public class Activities implements Serializable {
 		this.id = id;
 	}
 
-	public LocalDateTime getDateTime(){
+	public LocalDateTime getTimestamp(){
 		return timestamp;
 	}
 
-	public void setDateTime(LocalDateTime timestamp){
+	public void setTimestamp(LocalDateTime timestamp){
 		this.timestamp = timestamp;
 	}
 
