@@ -25,11 +25,7 @@ public class SecurityConfig {
         http
                 .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration config = new CorsConfiguration();
-                    config.setAllowedOriginPatterns(List.of(
-                            "http://localhost:3000",
-                            "https://sopra-fs26-group-35-client.vercel.app",
-                            "https://sopra-fs26-group-35-client-*.vercel.app"
-                    ));
+                    config.setAllowedOriginPatterns(List.of("*"));
                     config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     config.setAllowedHeaders(List.of("*"));
                     config.setAllowCredentials(true);
