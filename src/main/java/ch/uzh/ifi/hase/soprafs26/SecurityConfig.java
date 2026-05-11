@@ -46,7 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/users/login").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        .requestMatchers("/books/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/books/*").permitAll()
                         .anyRequest().authenticated()
                 ).addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);;
         return http.build();
