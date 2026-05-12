@@ -12,6 +12,7 @@ import ch.uzh.ifi.hase.soprafs26.repository.SessionParticipantRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.SessionRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
@@ -40,6 +41,7 @@ public class SessionService {
     private final SessionParticipantRepository sessionParticipantRepository;
     private final LeaderboardRepository leaderboardRepository;
     private final NotificationService notificationService;
+    private final ActivitiesService activitiesService;
 
     @Autowired
     public SessionService(SessionRepository sessionRepository,
@@ -48,13 +50,15 @@ public class SessionService {
                           SessionParticipantRepository sessionParticipantRepository,
                           LibraryService libraryService,
                           LeaderboardRepository leaderboardRepository,
-                          NotificationService notificationService) {
+                          NotificationService notificationService,
+                          ActivitiesService activitiesService) {
         this.sessionRepository = sessionRepository;
         this.userRepository = userRepository;
         this.shelfbookRepository = shelfbookRepository;
         this.sessionParticipantRepository = sessionParticipantRepository;
         this.leaderboardRepository = leaderboardRepository;
         this.notificationService = notificationService;
+        this.activitiesService = activitiesService;
     }
 
     public void sendSessionNotification(Long sessionId, Long senderId, List<Long> participantIds)
@@ -158,6 +162,7 @@ public class SessionService {
         shelfBookModel.setPagesRead(shelfBook.getPagesRead());
         shelfBookModel.setBook(bookModel);
         shelfBook.setStatus(BookStatus.READING);
+        activitiesService.addActivity(user, BookStatus.READING, shelfBook.getBook());
 
         List<Long> participantIds = session.getParticipants()
             .stream()

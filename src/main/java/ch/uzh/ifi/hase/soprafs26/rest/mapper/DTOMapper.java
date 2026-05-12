@@ -94,6 +94,7 @@ public interface DTOMapper {
     @Mapping(source = "user.username", target = "username")
     @Mapping(source = "book.name", target = "book")
     @Mapping(source = "actions", target = "actions")
+    @Mapping(source = "timestamp", target = "timestamp")
     ActivitiesGetDTO convertActivitiesEntityToGetDTO(Activities activities);
 
     @Mapping(source = "id", target = "id")

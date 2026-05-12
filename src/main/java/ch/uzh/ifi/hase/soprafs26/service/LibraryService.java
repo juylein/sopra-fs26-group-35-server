@@ -25,6 +25,7 @@ import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -121,7 +122,24 @@ public class LibraryService {
         }
 
         shelf.addBook(book);
-        return shelfRepository.save(shelf);
+        Shelf savedShelf = shelfRepository.save(shelf);
+
+        // Create activity when a book lands on a status shelf via direct shelf add
+        String shelfName = shelf.getName();
+        if ("Recent Readings".equals(shelfName) || "Read".equals(shelfName)) {
+            BookStatus statusForShelf = "Recent Readings".equals(shelfName) ? BookStatus.READING : BookStatus.FINISHED;
+            // Update the persisted ShelfBook's status to match the shelf
+            savedShelf.getBooks().stream()
+                .filter(sb -> sb.getBook().getId().equals(book.getId()))
+                .findFirst()
+                .ifPresent(sb -> {
+                    sb.setStatus(statusForShelf);
+                    shelfbookRepository.save(sb);
+                });
+            activitiesService.addActivity(user, statusForShelf, book);
+        }
+
+        return savedShelf;
     }
 
     public void deleteBookfromShelf(Long shelfId, String bookId, Long userId){
@@ -167,6 +185,7 @@ public class LibraryService {
         ShelfBook shelfBook = shelfbookRepository.findByShelfIdAndBookId(shelfId, bookId)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found on this shelf"));
 
+        BookStatus previousStatus = shelfBook.getStatus();
         shelfBook.setStatus(newStatus);
 
         User user = shelf.getShared() //Find the right user for the activity log
@@ -178,26 +197,44 @@ public class LibraryService {
 
         Book book = shelfBook.getBook();
 
-        // Remove book from whichever status shelf it currently exists on (if any)
-        List<String> statusShelfNames = List.of("To Read", "Recent Readings", "Read");
-        shelfbookRepository.findByShelf_OwnerIdAndBookIdAndShelf_NameIn(user.getId(), bookId, statusShelfNames)
-            .ifPresent(shelfbookRepository::delete);
-
-        // Add to the new status shelf
         String targetShelfName = newStatus == BookStatus.READING ? "Recent Readings"
                                : newStatus == BookStatus.FINISHED ? "Read"
                                : "To Read";
 
-        Shelf targetShelf = user.getShelves().stream()
-            .filter(s -> targetShelfName.equals(s.getName()))
-            .findFirst()
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, targetShelfName + " shelf not found"));
+        // Move book between status shelves only when necessary
+        List<String> statusShelfNames = List.of("To Read", "Recent Readings", "Read");
+        Optional<ShelfBook> existingStatusEntry = shelfbookRepository
+            .findByShelf_OwnerIdAndBookIdAndShelf_NameIn(user.getId(), bookId, statusShelfNames);
 
-        targetShelf.addBook(book);
-        shelfRepository.save(targetShelf);
+        boolean alreadyOnTargetShelf = existingStatusEntry.isPresent()
+            && existingStatusEntry.get().getShelf().getName().equals(targetShelfName);
 
-        shelfbookRepository.save(shelfBook);
-        activitiesService.addActivity(user, newStatus, book);
+        if (!alreadyOnTargetShelf) {
+            // Remove from whichever status shelf it's currently on (if any)
+            existingStatusEntry.ifPresent(shelfbookRepository::delete);
+
+            // Add to the target status shelf
+            Shelf targetShelf = user.getShelves().stream()
+                .filter(s -> targetShelfName.equals(s.getName()))
+                .findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, targetShelfName + " shelf not found"));
+            targetShelf.addBook(book);
+            shelfRepository.save(targetShelf);
+        }
+
+        // Only save shelfBook if it wasn't the entity we just deleted
+        boolean shelfBookWasDeleted = existingStatusEntry.isPresent()
+            && !alreadyOnTargetShelf
+            && existingStatusEntry.get().getId().equals(shelfBook.getId());
+
+        if (!shelfBookWasDeleted) {
+            shelfbookRepository.save(shelfBook);
+        }
+
+        // Only create activity when status actually changes to avoid duplicates
+        if (previousStatus != newStatus) {
+            activitiesService.addActivity(user, newStatus, book);
+        }
 
         return shelfBook;
     }
