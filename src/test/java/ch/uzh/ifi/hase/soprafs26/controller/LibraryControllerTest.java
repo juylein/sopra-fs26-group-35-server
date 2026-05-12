@@ -13,7 +13,7 @@ import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPostDTO;
-
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPutDTO;
 import ch.uzh.ifi.hase.soprafs26.service.LibraryService;
 
 import org.junit.jupiter.api.Test;
@@ -324,4 +324,20 @@ public class LibraryControllerTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }
+
+    @Test
+    @WithMockUser
+    public void renameShelf_validInput_returnsNoContent() throws Exception {
+        //given
+        ShelfPutDTO shelfPutDTO = new ShelfPutDTO();
+        shelfPutDTO.setName("The coolest shelf");
+
+        //then
+        mockMvc.perform(put("/users/1/library/shelves/1")
+                        .header("Authorization", "valid-token")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(shelfPutDTO)))
+                .andExpect(status().isNoContent());
+    }
+    
 }

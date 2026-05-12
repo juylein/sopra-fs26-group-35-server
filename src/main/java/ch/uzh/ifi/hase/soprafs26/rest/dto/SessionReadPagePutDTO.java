@@ -7,4 +7,9 @@ public class SessionReadPagePutDTO {
     {
         return numberOfPages;
     }
+
+    public void setNumberOfPages(Long numberOfPages) 
+    {
+      this.numberOfPages = numberOfPages;
+    }
 }

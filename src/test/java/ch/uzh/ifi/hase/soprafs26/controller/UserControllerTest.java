@@ -20,6 +20,8 @@ import static org.mockito.Mockito.doAnswer;
 
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.Activities;
+import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.Leaderboard;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.UserStatsGetDTO;
@@ -50,6 +52,7 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -269,6 +272,139 @@ public class UserControllerTest {
 
 	}
 
+	@Test
+ 	public void loginUser_validInput_returns200() throws Exception {
+		User user = new User();
+		user.setId(1L);
+		user.setUsername("testuser");
+		user.setToken("token");
+		user.setStatus(UserStatus.ONLINE);
+
+		UserPostDTO userPostDTO = new UserPostDTO();
+		userPostDTO.setUsername("testuser");
+		userPostDTO.setPassword("password");
+
+		given(userService.loginUser(Mockito.any())).willReturn(user);
+
+		mockMvc.perform(post("/users/login")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(asJsonString(userPostDTO)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id", is(user.getId().intValue())))
+				.andExpect(jsonPath("$.username", is(user.getUsername())))
+				.andExpect(jsonPath("$.token", is(user.getToken())))
+				.andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+	}
+
+	@Test
+	@WithMockUser
+	public void logoutUser_validInput_returns204() throws Exception {
+		mockMvc.perform(put("/users/1/logout")
+						.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNoContent());
+	}
+
+	@Test
+	@WithMockUser
+	public void getUserByUsername_validUsername_returnsUser() throws Exception {
+		User user = new User();
+		user.setId(1L);
+		user.setUsername("testuser");
+		user.setStatus(UserStatus.ONLINE);
+
+		given(userService.getUserByUsername("testuser")).willReturn(user);
+
+		mockMvc.perform(get("/users/friends/testuser")
+						.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id", is(user.getId().intValue())))
+				.andExpect(jsonPath("$.username", is(user.getUsername())))
+				.andExpect(jsonPath("$.status", is(user.getStatus().toString())));
+	}
+
+	@Test
+	@WithMockUser
+	public void getActivities_validUser_returnsActivities() throws Exception {
+		User user = new User();
+		user.setId(1L);
+		user.setUsername("testuser");
+
+		Book book = new Book();
+		book.setName("Dune");
+
+		Activities activity = new Activities();
+		activity.setId(1L);
+		activity.setUser(user);
+		activity.setBook(book);
+		activity.setActions("finished");
+
+		given(userService.getUserById(1L)).willReturn(user);
+		given(activitiesService.getAllActivities(user)).willReturn(List.of(activity));
+
+		mockMvc.perform(get("/users/1/activities")
+						.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].username", is("testuser")))
+				.andExpect(jsonPath("$[0].actions", is("finished")));
+	}
+
+	@Test
+	@WithMockUser
+	public void getActivitiesByFriend_validIds_returnsActivities() throws Exception {
+		User user = new User();
+		user.setId(1L);
+		user.setUsername("testuser");
+
+		Book book = new Book();
+		book.setName("Dune");
+
+		Activities activity = new Activities();
+		activity.setId(1L);
+		activity.setUser(user);
+		activity.setBook(book);
+		activity.setActions("finished");
+
+		given(userService.getUserById(1L)).willReturn(user);
+		given(activitiesService.getActivitiesByFriend(user, 2L)).willReturn(List.of(activity));
+
+		mockMvc.perform(get("/users/1/activities/2")
+						.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].username", is("testuser")))
+				.andExpect(jsonPath("$[0].actions", is("finished")));
+	}
+
+	@Test
+	@WithMockUser
+	public void updateUser_validInput_returns200() throws Exception {
+		UserPostDTO userPostDTO = new UserPostDTO();
+		userPostDTO.setPassword("newPassword");
+		userPostDTO.setBio("new bio");
+
+		mockMvc.perform(put("/users/1")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(asJsonString(userPostDTO)))
+				.andExpect(status().isOk());
+	}
+
+	@Test
+	@WithMockUser
+	public void getFriends_validUser_returnsFriends() throws Exception {
+		User friend = new User();
+		friend.setId(2L);
+		friend.setUsername("frienduser");
+		friend.setStatus(UserStatus.ONLINE);
+
+		given(friendService.getFriends(1L)).willReturn(List.of(friend));
+
+		mockMvc.perform(get("/users/1/friends")
+						.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].username", is("frienduser")));
+	}
 	/**
 	 * Helper Method to convert userPostDTO into a JSON string such that the input
 	 * can be processed

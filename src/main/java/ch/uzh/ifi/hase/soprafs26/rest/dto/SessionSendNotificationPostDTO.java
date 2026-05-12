@@ -11,8 +11,18 @@ public class SessionSendNotificationPostDTO {
         return shelfBookId;
     }
 
+    public void setShelfBookId(Long shelfBookId) 
+    {
+        this.shelfBookId = shelfBookId;
+    }
+
     public List<Long> getParticipantIds()
     {
         return participantIds;
+    }
+
+    public void setParticipantIds(List<Long> participantIds) 
+    {
+        this.participantIds = participantIds;
     }
 }

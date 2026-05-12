@@ -7,4 +7,9 @@ public class SessionJoinPutDTO {
     {
         return shelfBookId;
     }
+
+    public void setShelfBookId(Long shelfBookId)
+    {
+        this.shelfBookId = shelfBookId;
+    }
 }
