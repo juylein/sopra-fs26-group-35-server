@@ -2,7 +2,7 @@ package ch.uzh.ifi.hase.soprafs26.rest.dto;
 
 import java.util.List;
 
-public class QuizSendDTO {
+public class QuizSendDTO { //	Send quiz to friends request
     private List<Long> friendIds;
 
     public List<Long> getFriendIds() { return friendIds; }

@@ -1,6 +1,6 @@
 package ch.uzh.ifi.hase.soprafs26.rest.dto;
 
-public class QuizResultEntryDTO {
+public class QuizResultEntryDTO { //	Submit response + used inside MyQuizSummaryDTO
     private Long userId;
     private String username;
     private Integer scoreGot;

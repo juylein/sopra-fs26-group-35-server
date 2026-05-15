@@ -3,7 +3,7 @@ package ch.uzh.ifi.hase.soprafs26.rest.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-public class QuizGetDTO {
+public class QuizGetDTO { //Create quiz response (with correctOption)
 
     private Long id;
     private String title;

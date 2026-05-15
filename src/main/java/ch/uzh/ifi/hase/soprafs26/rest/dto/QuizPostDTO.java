@@ -2,7 +2,7 @@ package ch.uzh.ifi.hase.soprafs26.rest.dto;
 
 import java.util.List;
 
-public class QuizPostDTO {
+public class QuizPostDTO { 	//Create quiz request
 
     private String title;
     private String difficulty;

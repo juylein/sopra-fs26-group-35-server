@@ -2,10 +2,7 @@ package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Quiz;
 import ch.uzh.ifi.hase.soprafs26.entity.QuizQuestion;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.MyQuizSummaryDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizGetDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizPostDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizSendDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.*;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs26.service.QuizService;
 import org.springframework.http.HttpStatus;
@@ -61,4 +58,30 @@ public class QuizController {
                 .orElse(ResponseEntity.noContent().build());
     }
 
+    @PostMapping("/{quizId}/submit")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public QuizResultEntryDTO submitQuiz(
+            @PathVariable Long userId,
+            @PathVariable Long quizId,
+            @RequestBody QuizSubmitDTO quizSubmitDTO) {
+        return quizService.submitQuiz(userId, quizId, quizSubmitDTO.getAnswers());
+    }
+
+    @PutMapping("/{quizId}/accept")
+    @ResponseStatus(HttpStatus.OK)
+    public void acceptQuiz(
+            @PathVariable Long userId,
+            @PathVariable Long quizId) {
+        quizService.acceptQuiz(userId, quizId);
+    }
+
+    @GetMapping("/{quizId}/take")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public QuizTakeDTO getQuizForTaking(
+            @PathVariable Long userId,
+            @PathVariable Long quizId) {
+        return quizService.getQuizForTaking(userId, quizId);
+    }
 }

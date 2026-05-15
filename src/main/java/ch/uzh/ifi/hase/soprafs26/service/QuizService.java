@@ -3,10 +3,7 @@ package ch.uzh.ifi.hase.soprafs26.service;
 import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
 import ch.uzh.ifi.hase.soprafs26.entity.*;
 import ch.uzh.ifi.hase.soprafs26.repository.*;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.MyQuizSummaryDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizPostDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizQuestionDTO;
-import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizResultEntryDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -174,5 +171,95 @@ public class QuizService {
         );
 
         return Optional.of(dto);
+    }
+
+    @Transactional
+    public QuizResultEntryDTO submitQuiz(Long userId, Long quizId, List<Integer> answers) {
+        getAuthenticatedUser(userId);
+
+        QuizResult result = quizResultRepository
+                .findAllByUser_IdAndQuiz_Id(userId, quizId)
+                .stream().findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "You have not been sent this quiz"));
+
+        if (Boolean.TRUE.equals(result.getCompleted())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Quiz already completed");
+        }
+
+        List<QuizQuestion> questions = quizQuestionRepository.findAllByQuiz_Id(quizId);
+
+        int score = 0;
+        for (int i = 0; i < Math.min(answers.size(), questions.size()); i++) {
+            if (answers.get(i).equals(questions.get(i).getCorrectOption())) {
+                score++;
+            }
+        }
+
+        result.setScoreGot(score);
+        result.setScoreTotal(questions.size());
+        result.setCompleted(true);
+        quizResultRepository.save(result);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (user.getLeaderboard() != null) {
+            user.getLeaderboard().addQuizPoints((long) score);
+        }
+
+        QuizResultEntryDTO dto = new QuizResultEntryDTO();
+        dto.setUserId(userId);
+        dto.setScoreGot(score);
+        dto.setScoreTotal(questions.size());
+        dto.setPending(false);
+        return dto;
+    }
+
+    @Transactional
+    public void acceptQuiz(Long userId, Long quizId) {
+        getAuthenticatedUser(userId);
+
+        QuizResult result = quizResultRepository
+                .findAllByUser_IdAndQuiz_Id(userId, quizId)
+                .stream().findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "No quiz challenge found for this user"));
+
+        result.setAccepted(true);
+        quizResultRepository.save(result);
+    }
+
+    @Transactional(readOnly = true)
+    public QuizTakeDTO getQuizForTaking(Long userId, Long quizId) {
+        getAuthenticatedUser(userId);
+
+        quizResultRepository
+                .findAllByUser_IdAndQuiz_Id(userId, quizId)
+                .stream().findFirst()
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.FORBIDDEN, "You have not been sent this quiz"));
+
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Quiz not found"));
+
+        List<QuizQuestion> questions = quizQuestionRepository.findAllByQuiz_Id(quizId);
+
+        QuizTakeDTO dto = new QuizTakeDTO();
+        dto.setQuizId(quiz.getId());
+        dto.setTitle(quiz.getTitle());
+        dto.setDifficulty(quiz.getDifficulty());
+        dto.setQuestions(questions.stream().map(q -> {
+            QuizTakeQuestionDTO qDto = new QuizTakeQuestionDTO();
+            qDto.setId(q.getId());
+            qDto.setQuestionText(q.getQuestionText());
+            qDto.setOption1(q.getOption1());
+            qDto.setOption2(q.getOption2());
+            qDto.setOption3(q.getOption3());
+            qDto.setOption4(q.getOption4());
+            return qDto;
+        }).toList());
+
+        return dto;
     }
 }
