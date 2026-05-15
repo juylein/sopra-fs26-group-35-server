@@ -215,7 +215,7 @@ public class UserControllerTest {
     	Leaderboard leaderboard = new Leaderboard();
 		leaderboard.setTotalPoints();
 		leaderboard.addReadingPoints(50L);
-		leaderboard.addQuizzPoints(30L);
+		leaderboard.addQuizPoints(30L);
 
     	UserStatsGetDTO userStatsDTO = new UserStatsGetDTO();
     	userStatsDTO.setBooksRead(user.getBooksRead()); 
@@ -254,7 +254,7 @@ public class UserControllerTest {
 			lb.setId((long) i);
 			lb.setUser(user);
 			lb.setTotalPoints();
-			lb.addQuizzPoints(10L*i);
+			lb.addQuizPoints(10L*i);
 
 			mockLeaderboards.add(lb);
 		}

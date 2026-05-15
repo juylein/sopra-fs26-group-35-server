@@ -8,7 +8,7 @@ public class MyQuizSummaryDTO { //	Latest quiz summary for creator
     private Long id;
     private String title;
     private String difficulty;
-    private Long bookId;
+    private String bookId;
     private LocalDateTime createdAt;
     private int questionCount;
     private List<QuizResultEntryDTO> results;
@@ -22,8 +22,8 @@ public class MyQuizSummaryDTO { //	Latest quiz summary for creator
     public String getDifficulty() { return difficulty; }
     public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
 
-    public Long getBookId() { return bookId; }
-    public void setBookId(Long bookId) { this.bookId = bookId; }
+    public String getBookId() { return bookId; }
+    public void setBookId(String bookId) { this.bookId = bookId; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

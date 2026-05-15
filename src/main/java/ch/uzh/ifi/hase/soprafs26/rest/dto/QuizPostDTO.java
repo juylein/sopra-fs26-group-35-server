@@ -6,7 +6,7 @@ public class QuizPostDTO { 	//Create quiz request
 
     private String title;
     private String difficulty;
-    private Long bookId;
+    private String bookId;
     private List<QuizQuestionDTO> questions;
 
     public String getTitle() { return title; }
@@ -15,8 +15,8 @@ public class QuizPostDTO { 	//Create quiz request
     public String getDifficulty() { return difficulty; }
     public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
 
-    public Long getBookId() { return bookId; }
-    public void setBookId(Long bookId) { this.bookId = bookId; }
+    public String getBookId() { return bookId; }
+    public void setBookId(String bookId) { this.bookId = bookId; }
 
     public List<QuizQuestionDTO> getQuestions() { return questions; }
     public void setQuestions(List<QuizQuestionDTO> questions) { this.questions = questions; }

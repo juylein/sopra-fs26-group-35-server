@@ -76,7 +76,7 @@ public class DTOMapperTest {
         Leaderboard leaderboard = new Leaderboard();
         leaderboard.setTotalPoints();
         leaderboard.addReadingPoints(40L);
-        leaderboard.addQuizzPoints(20L);
+        leaderboard.addQuizPoints(20L);
 
         UserStatsGetDTO dto = DTOMapper.INSTANCE.convertToUserStatsGetDTO(user, leaderboard);
 

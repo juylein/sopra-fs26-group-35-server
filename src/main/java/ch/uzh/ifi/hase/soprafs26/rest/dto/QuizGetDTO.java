@@ -8,7 +8,7 @@ public class QuizGetDTO { //Create quiz response (with correctOption)
     private Long id;
     private String title;
     private String difficulty;
-    private Long bookId;
+    private String bookId;
     private Long createdById;
     private String createdByUsername;
     private LocalDateTime createdAt;
@@ -23,8 +23,8 @@ public class QuizGetDTO { //Create quiz response (with correctOption)
     public String getDifficulty() { return difficulty; }
     public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
 
-    public Long getBookId() { return bookId; }
-    public void setBookId(Long bookId) { this.bookId = bookId; }
+    public String getBookId() { return bookId; }
+    public void setBookId(String bookId) { this.bookId = bookId; }
 
     public Long getCreatedById() { return createdById; }
     public void setCreatedById(Long createdById) { this.createdById = createdById; }
