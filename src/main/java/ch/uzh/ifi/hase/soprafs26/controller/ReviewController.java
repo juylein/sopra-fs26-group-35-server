@@ -1,13 +1,18 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ReviewGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ReviewPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs26.service.ReviewService;
@@ -25,5 +30,18 @@ public class ReviewController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void editReview(@PathVariable Long userId, @PathVariable Long reviewId, @RequestBody ReviewPostDTO reviewPostDTO) {
         reviewService.editReview(userId, reviewId, reviewPostDTO);
+    }
+
+    @DeleteMapping
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteReview(@PathVariable Long userId, @PathVariable Long reviewId){
+        reviewService.deleteReview(userId, reviewId);
+    }
+
+    @GetMapping
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public ReviewGetDTO getReview(@PathVariable Long userId, @PathVariable Long reviewId){
+        return DTOMapper.INSTANCE.convertReviewToGetDTO(reviewService.getReview(userId, reviewId));
     }
 }

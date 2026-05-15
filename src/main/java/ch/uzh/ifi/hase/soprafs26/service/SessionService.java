@@ -1,6 +1,7 @@
 package ch.uzh.ifi.hase.soprafs26.service;
 
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
+import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
 import ch.uzh.ifi.hase.soprafs26.entity.Session;
 import ch.uzh.ifi.hase.soprafs26.entity.SessionParticipant;
 import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
@@ -11,6 +12,12 @@ import ch.uzh.ifi.hase.soprafs26.repository.SessionParticipantRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.SessionRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.BookGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantGetDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionParticipantPostDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookGetDTO;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,8 +39,9 @@ public class SessionService {
     private final UserRepository userRepository;
     private final ShelfBookRepository shelfbookRepository;
     private final SessionParticipantRepository sessionParticipantRepository;
-    private final LibraryService libraryService;
     private final LeaderboardRepository leaderboardRepository;
+    private final NotificationService notificationService;
+    private final ActivitiesService activitiesService;
 
     @Autowired
     public SessionService(SessionRepository sessionRepository,
@@ -41,13 +49,33 @@ public class SessionService {
                           ShelfBookRepository shelfbookRepository,
                           SessionParticipantRepository sessionParticipantRepository,
                           LibraryService libraryService,
-                          LeaderboardRepository leaderboardRepository) {
+                          LeaderboardRepository leaderboardRepository,
+                          NotificationService notificationService,
+                          ActivitiesService activitiesService) {
         this.sessionRepository = sessionRepository;
         this.userRepository = userRepository;
         this.shelfbookRepository = shelfbookRepository;
         this.sessionParticipantRepository = sessionParticipantRepository;
-        this.libraryService = libraryService;
         this.leaderboardRepository = leaderboardRepository;
+        this.notificationService = notificationService;
+        this.activitiesService = activitiesService;
+    }
+
+    public void sendSessionNotification(Long sessionId, Long senderId, List<Long> participantIds)
+    {
+        User sender = userRepository.findById(senderId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found"));
+    
+        for (Long participantId : participantIds) {
+            notificationService.createNotification(
+                participantId,
+                NotificationType.SHARED_SESSION,
+                String.format("%s wants to start a shared session... Hurry up!", sender.getUsername()),
+                null
+            );
+
+            notificationService.sendSessionInvite(sessionId, senderId, participantId);
+        }
     }
 
     public Session createReadingSession(List<Long> userIds, List<Long> shelfBookIds) {
@@ -74,7 +102,8 @@ public class SessionService {
 
         Session newSession = new Session();
         sessionRepository.save(newSession);
-
+        sessionRepository.flush();
+        
         for (int i = 0; i < participants.size(); i++) {
             SessionParticipant sp = new SessionParticipant();
             sp.setSession(newSession);
@@ -85,6 +114,7 @@ public class SessionService {
             sessionParticipantRepository.save(sp);
         }
 
+        sessionParticipantRepository.flush();
         return newSession;
     }
 
@@ -104,22 +134,67 @@ public class SessionService {
         return session;
     }
 
-    public void joinSession(Long sessionId, Long userId) {
+    public void joinSession(Long sessionId, Long userId, Long shelfBookId) {
         Session session = sessionRepository.findById(sessionId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        SessionParticipant sp = sessionParticipantRepository.findBySessionAndUser(session, user)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Participant not found in session"));
+        ShelfBook shelfBook = shelfbookRepository.findById(shelfBookId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "ShelfBook not found"));
 
-        sp.setJoinedAt(LocalDateTime.now());
+        SessionParticipant sp = new SessionParticipant();
+        sp.setSession(session);
+        sp.setJoinedAt(LocalDateTime.now()); 
+        sp.setUser(user);
+        sp.setShelfBook(shelfBook);
         sessionParticipantRepository.save(sp);
+        sessionParticipantRepository.flush();
 
-        ShelfBook shelfBook = sp.getShelfBook();
-        if (shelfBook.getStatus() != BookStatus.READING) {
-            libraryService.updateBookStatus(shelfBook.getShelf().getId(), shelfBook.getBook().getId(), BookStatus.READING);
+        ShelfBookGetDTO shelfBookModel = new ShelfBookGetDTO();
+        BookGetDTO bookModel = new BookGetDTO();
+        bookModel.setName(shelfBook.getBook().getName());
+        bookModel.setId(shelfBook.getBook().getId());
+        bookModel.setPages(shelfBook.getBook().getPages());
+
+        shelfBookModel.setId(shelfBookId);
+        shelfBookModel.setPagesRead(shelfBook.getPagesRead());
+        shelfBookModel.setBook(bookModel);
+        shelfBook.setStatus(BookStatus.READING);
+        activitiesService.addActivity(user, BookStatus.READING, shelfBook.getBook());
+
+        List<Long> participantIds = session.getParticipants()
+            .stream()
+            .filter(p -> !p.getUser().getId().equals(userId))
+            .map(x -> x.getUser().getId()).toList();
+
+        for (Long recipientId : participantIds) {
+            this.notificationService.sendSessionJoin(sessionId, userId, recipientId, shelfBookModel);
+        }
+    }
+
+    public void changeNumberOfPagesSession(Long sessionId, Long userId, Long numberOfPages) {
+        Session session = sessionRepository.findById(sessionId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
+
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+            
+        SessionParticipant participant = sessionParticipantRepository.findBySessionAndUser(session, user)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Participant not found"));
+
+        participant.setPagesRead(numberOfPages);
+        sessionParticipantRepository.save(participant);
+        sessionParticipantRepository.flush();
+
+        List<Long> participantIds = session.getParticipants()
+            .stream()
+            .filter(p -> !p.getUser().getId().equals(userId))
+            .map(x -> x.getUser().getId()).toList();
+
+        for (Long recipientId : participantIds) {
+            this.notificationService.sendSessionChangePage(sessionId, userId, recipientId, numberOfPages);
         }
     }
 
@@ -149,6 +224,16 @@ public class SessionService {
 
         shelfBook.setPagesRead(pagesRead);
         shelfbookRepository.save(shelfBook);
+        shelfbookRepository.flush();
+
+        List<Long> participantIds = session.getParticipants()
+            .stream()
+            .filter(p -> !p.getUser().getId().equals(userId))
+            .map(x -> x.getUser().getId()).toList();
+
+        for (Long recipientId : participantIds) {
+            this.notificationService.sendSessionQuit(sessionId, userId, recipientId);
+        }
 
         long minutesRead = sp.getReadingTime().toMinutes();
         long points = Math.round((pagesRead * 0.1) + (minutesRead * 0.05));
@@ -174,5 +259,13 @@ public class SessionService {
         }
 
         return sessionRepository.findLatestSessionForUser(userId).orElse(null);
+    }
+
+    public List<SessionParticipant> getSessionParticipants(Long sessionId)
+    {
+        Session session = sessionRepository.findById(sessionId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
+
+        return session.getParticipants();
     }
 }

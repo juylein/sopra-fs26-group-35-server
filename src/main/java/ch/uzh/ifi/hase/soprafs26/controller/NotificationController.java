@@ -1,5 +1,6 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
+import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
 import ch.uzh.ifi.hase.soprafs26.entity.Notifications;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.NotificationGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
