@@ -1,16 +1,12 @@
 package ch.uzh.ifi.hase.soprafs26.service;
 
 import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
-import ch.uzh.ifi.hase.soprafs26.entity.Quiz;
-import ch.uzh.ifi.hase.soprafs26.entity.QuizQuestion;
-import ch.uzh.ifi.hase.soprafs26.entity.User;
-import ch.uzh.ifi.hase.soprafs26.entity.Notifications;
-import ch.uzh.ifi.hase.soprafs26.repository.FriendshipsRepository;
-import ch.uzh.ifi.hase.soprafs26.repository.QuizRepository;
-import ch.uzh.ifi.hase.soprafs26.repository.QuizQuestionRepository;
-import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.entity.*;
+import ch.uzh.ifi.hase.soprafs26.repository.*;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.MyQuizSummaryDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizQuestionDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizResultEntryDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -28,17 +25,20 @@ public class QuizService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final FriendshipsRepository friendshipsRepository;
+    private final QuizResultRepository quizResultRepository;
 
     public QuizService(QuizRepository quizRepository,
                        QuizQuestionRepository quizQuestionRepository,
                        UserRepository userRepository,
                        NotificationService notificationService,
-                       FriendshipsRepository friendshipsRepository) {
+                       FriendshipsRepository friendshipsRepository,
+                       QuizResultRepository quizResultRepository) {
         this.quizRepository = quizRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.friendshipsRepository = friendshipsRepository;
+        this.quizResultRepository = quizResultRepository;
     }
 
     private User getAuthenticatedUser(Long userId) {
@@ -93,7 +93,7 @@ public class QuizService {
         }
 
         for (Long friendId : friendIds) {
-            userRepository.findById(friendId)
+            User friend = userRepository.findById(friendId)
                     .orElseThrow(() -> new ResponseStatusException(
                             HttpStatus.NOT_FOUND, "User with id " + friendId + " not found"));
 
@@ -115,6 +115,15 @@ public class QuizService {
                     sender.getUsername() + " sent you a quiz: " + quiz.getTitle(),
                     quiz.getId()
             );
+
+            QuizResult result = new QuizResult();
+            result.setQuiz(quiz);
+            result.setUser(friend);
+            result.setScoreTotal(quizQuestionRepository.findAllByQuiz_Id(quizId).size());
+            result.setScoreGot(null); // pending
+            result.setAccepted(false);
+            result.setCompleted(false);
+            quizResultRepository.save(result);
         }
     }
 
@@ -128,5 +137,42 @@ public class QuizService {
     @Transactional(readOnly = true)
     public List<QuizQuestion> getQuestionsForQuiz(Long quizId) {
         return quizQuestionRepository.findAllByQuiz_Id(quizId);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<MyQuizSummaryDTO> getLatestQuizForUser(Long userId) {
+        getAuthenticatedUser(userId);
+
+        Optional<Quiz> latestOpt = quizRepository
+                .findTopByCreatedBy_IdOrderByCreatedAtDesc(userId);
+
+        if (latestOpt.isEmpty()) {
+            return Optional.empty(); // ← no quiz yet, not an error
+        }
+
+        Quiz latest = latestOpt.get();
+        List<QuizQuestion> questions = quizQuestionRepository.findAllByQuiz_Id(latest.getId());
+        List<QuizResult> results = quizResultRepository.findAllByQuiz_Id(latest.getId());
+
+        MyQuizSummaryDTO dto = new MyQuizSummaryDTO();
+        dto.setId(latest.getId());
+        dto.setTitle(latest.getTitle());
+        dto.setDifficulty(latest.getDifficulty());
+        dto.setBookId(latest.getBookId());
+        dto.setCreatedAt(latest.getCreatedAt());
+        dto.setQuestionCount(questions.size());
+        dto.setResults(
+                results.stream().map(res -> {
+                    QuizResultEntryDTO r = new QuizResultEntryDTO();
+                    r.setUserId(res.getUser().getId());
+                    r.setUsername(res.getUser().getUsername());
+                    r.setScoreGot(res.getScoreGot());
+                    r.setScoreTotal(res.getScoreTotal());
+                    r.setPending(Boolean.FALSE.equals(res.getCompleted()) || res.getScoreGot() == null);
+                    return r;
+                }).toList()
+        );
+
+        return Optional.of(dto);
     }
 }

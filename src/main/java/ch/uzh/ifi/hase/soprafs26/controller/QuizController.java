@@ -2,12 +2,14 @@ package ch.uzh.ifi.hase.soprafs26.controller;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Quiz;
 import ch.uzh.ifi.hase.soprafs26.entity.QuizQuestion;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.MyQuizSummaryDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.QuizSendDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs26.service.QuizService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,4 +52,13 @@ public class QuizController {
 
         quizService.sendQuizToFriends(userId, quizId, quizSendDTO.getFriendIds());
     }
+
+    @GetMapping("/latest")
+    @ResponseBody
+    public ResponseEntity<MyQuizSummaryDTO> getLatestQuizForUser(@PathVariable Long userId) {
+        return quizService.getLatestQuizForUser(userId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.noContent().build());
+    }
+
 }
