@@ -1,7 +1,6 @@
  package ch.uzh.ifi.hase.soprafs26.rest.dto;
 
 import java.util.List;
-import java.util.Set;
 import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
 
 
@@ -15,7 +14,7 @@ import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
     private String description;
     private String coverUrl;
     private Double averageRating;
-    private Set<ReviewGetDTO> reviews;
+    private List<ReviewGetDTO> reviews;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -44,6 +43,6 @@ import ch.uzh.ifi.hase.soprafs26.entity.Reviews;
     public Double getAverageRating() { return averageRating; }
     public void setAverageRating(Double averageRating) { this.averageRating = averageRating; }
 
-    public Set<ReviewGetDTO> getReviews() { return reviews; }
-    public void setReviews(Set<ReviewGetDTO> reviews) { this.reviews = reviews; }
+    public List<ReviewGetDTO> getReviews() { return reviews; }
+    public void setReviews(List<ReviewGetDTO> reviews) { this.reviews = reviews; }
  }

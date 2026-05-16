@@ -134,10 +134,7 @@ public interface DTOMapper {
     @Mapping(source = "review", target = "review")
     @Mapping(source = "id", target = "id")
     ReviewGetDTO convertReviewToGetDTO(Reviews review);
-
     List<ReviewGetDTO> convertReviewEntitiesToGetDTOs(List<Reviews> reviews);
-
-    Set<ReviewGetDTO> convertReviewEntitiesToGetDTOs(Set<Reviews> reviews);
 
     @Mapping(source = "id", target = "id")
     @Mapping(source = "requester.id", target = "requesterId")
