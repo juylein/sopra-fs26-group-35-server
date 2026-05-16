@@ -369,7 +369,7 @@ public class LibraryServiceTest {
         verify(shelfBookRepository, never()).delete(any());
     }
 
-    // ── inviteToShelf ────────────────────────────────────────────────────────
+    // inviteToShelf
 
     @Test
     public void inviteToShelf_success_createsInvitationAndNotification() {
@@ -504,7 +504,7 @@ public class LibraryServiceTest {
         verify(shelfInvitationRepository, never()).save(any());
     }
 
-    // ── acceptShelfInvitation ────────────────────────────────────────────────
+    // acceptShelfInvitation 
 
     @Test
     public void acceptShelfInvitation_convertsPrivateShelfToShared() {
@@ -601,7 +601,7 @@ public class LibraryServiceTest {
         verify(shelfRepository, never()).save(any());
     }
 
-    // ── rejectShelfInvitation ────────────────────────────────────────────────
+    // rejectShelfInvitation
 
     @Test
     public void rejectShelfInvitation_success() {
@@ -655,7 +655,7 @@ public class LibraryServiceTest {
         verify(shelfInvitationRepository, never()).save(any(ShelfInvitation.class));
     }
 
-    // ── getSharedShelves ─────────────────────────────────────────────────────
+    // getSharedShelves
 
     @Test
     public void getSharedShelves_returnsUserSharedShelves() {
@@ -673,7 +673,7 @@ public class LibraryServiceTest {
         assertTrue(result.contains(sharedShelf));
     }
 
-    // ── deleteShelf (shared) ─────────────────────────────────────────────────
+    // deleteShelf (shared)
 
     @Test
     public void deleteShelf_sharedShelf_memberCanDelete() {
@@ -711,7 +711,7 @@ public class LibraryServiceTest {
         verify(shelfRepository, never()).delete(any());
     }
 
-    // ── renameShelf (shared) ─────────────────────────────────────────────────
+    // renameShelf (shared) 
 
     @Test
     public void renameShelf_sharedShelf_memberCanRename() {
