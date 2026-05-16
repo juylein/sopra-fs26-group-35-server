@@ -144,6 +144,15 @@ public class NotificationService {
         log.debug("Marked all notifications as read for userId: {}", userId);
     }
 
+    public void deleteNotification(Long userId, Long notificationId) {
+        Notifications notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (!notification.getRecipient().getId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        notificationRepository.delete(notification);
+    }
+
     /**
      * This is a helper method that will check whether a user with the given id
      * exists. The method will do nothing if the user is found and throw an error

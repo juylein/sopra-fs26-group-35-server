@@ -40,4 +40,10 @@ public class NotificationController {
     public void markAllRead(@PathVariable Long userId) {
         notificationService.markAllRead(userId);
     }
+
+    @DeleteMapping("/users/{userId}/notifications/{notificationId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteNotification(@PathVariable Long userId, @PathVariable Long notificationId) {
+        notificationService.deleteNotification(userId, notificationId);
+    }
 }

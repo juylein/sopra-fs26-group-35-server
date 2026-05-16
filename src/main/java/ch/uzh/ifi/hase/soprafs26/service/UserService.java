@@ -207,4 +207,8 @@ public class UserService {
         }
         userRepository.save(user);
     }
+
+    public List<User> searchByUsername(String query) {
+        return userRepository.findByUsernameContainingIgnoreCase(query);
+    }
 }
