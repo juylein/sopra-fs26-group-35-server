@@ -6,6 +6,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * DTOMapper
@@ -78,6 +79,7 @@ public interface DTOMapper {
     @Mapping(source = "description", target = "description")
     @Mapping(source = "coverUrl", target = "coverUrl")
     @Mapping(target = "averageRating", ignore = true)
+    @Mapping(source = "reviews", target = "reviews")
     BookGetDTO convertBookEntityToGetDTO(Book book);
 
     @Mapping(source = "status", target = "status")

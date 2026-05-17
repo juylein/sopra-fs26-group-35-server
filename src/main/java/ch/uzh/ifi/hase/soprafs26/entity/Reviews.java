@@ -37,10 +37,10 @@ public class Reviews implements Serializable {
 	@JoinColumn(name = "book_id")
 	private Book book;
 
-	@Column(nullable = true)
+	@Column(nullable = false)
 	private Integer rating;
 
-	@Column(nullable = false)
+	@Column(nullable = true)
     private String review;
 
 	@Column(nullable = true)
