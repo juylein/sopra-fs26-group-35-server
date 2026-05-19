@@ -1,14 +1,17 @@
 package ch.uzh.ifi.hase.soprafs26.service;
 
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
+import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
 import ch.uzh.ifi.hase.soprafs26.constant.UserStatus;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfInvitation;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 
 import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
+import ch.uzh.ifi.hase.soprafs26.repository.ShelfInvitationRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
 
@@ -29,12 +32,15 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -55,6 +61,12 @@ public class LibraryServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ShelfInvitationRepository shelfInvitationRepository;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private LibraryService libraryService;
@@ -387,4 +399,385 @@ public class LibraryServiceTest {
     assertThrows(ResponseStatusException.class,
             () -> libraryService.renameShelf(1L, 1L, "x"));
 }
+    // inviteToShelf
+
+    @Test
+    public void inviteToShelf_success_createsInvitationAndNotification() {
+        User target = new User();
+        target.setId(2L);
+        target.setUsername("targetUser");
+
+        User requester = spy(new User());
+        requester.setId(1L);
+        requester.setToken("valid-token");
+        requester.setUsername("testUser");
+        doReturn(Set.of(target)).when(requester).getFriends();
+
+        shelf.setName("My Shelf");
+        shelf.setOwner(requester);
+
+        ShelfInvitation savedInvitation = new ShelfInvitation();
+        savedInvitation.setId(10L);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(requester));
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(userRepository.findById(2L)).willReturn(Optional.of(target));
+        given(shelfInvitationRepository.existsByShelfIdAndRecipientIdAndStatus(1L, 2L, "PENDING")).willReturn(false);
+        given(shelfInvitationRepository.save(any(ShelfInvitation.class))).willReturn(savedInvitation);
+
+        assertDoesNotThrow(() -> libraryService.inviteToShelf(1L, 1L, 2L));
+        verify(shelfInvitationRepository).save(any(ShelfInvitation.class));
+        verify(notificationService).createNotification(eq(2L), eq(NotificationType.SHELF_INVITATION), anyString(), eq(10L));
+    }
+
+    @Test
+    public void inviteToShelf_statusShelf_throws400() {
+        shelf.setName("To Read");
+        shelf.setOwner(testUser);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.inviteToShelf(1L, 1L, 2L));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(shelfInvitationRepository, never()).save(any());
+    }
+
+    @Test
+    public void inviteToShelf_requesterNotOwnerOrMember_throws403() {
+        User otherOwner = new User();
+        otherOwner.setId(2L);
+
+        shelf.setName("Some Shelf");
+        shelf.setOwner(otherOwner);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.inviteToShelf(1L, 1L, 3L));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    public void inviteToShelf_targetNotFriend_throws403() {
+        User target = new User();
+        target.setId(2L);
+
+        shelf.setName("My Shelf");
+        shelf.setOwner(testUser);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(userRepository.findById(2L)).willReturn(Optional.of(target));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.inviteToShelf(1L, 1L, 2L));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    public void inviteToShelf_targetAlreadyMember_throws409() {
+        User target = new User();
+        target.setId(2L);
+        target.setUsername("targetUser");
+
+        User requester = spy(new User());
+        requester.setId(1L);
+        requester.setToken("valid-token");
+        doReturn(Set.of(target)).when(requester).getFriends();
+
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(1L);
+        sharedShelf.setName("Shared Shelf");
+        sharedShelf.setShared(true);
+        sharedShelf.setOwners(new HashSet<>(Set.of(requester, target)));
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(requester));
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(sharedShelf));
+        given(userRepository.findById(2L)).willReturn(Optional.of(target));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.inviteToShelf(1L, 1L, 2L));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(shelfInvitationRepository, never()).save(any());
+    }
+
+    @Test
+    public void inviteToShelf_duplicatePendingInvitation_throws409() {
+        User target = new User();
+        target.setId(2L);
+        target.setUsername("targetUser");
+
+        User requester = spy(new User());
+        requester.setId(1L);
+        requester.setToken("valid-token");
+        doReturn(Set.of(target)).when(requester).getFriends();
+
+        shelf.setName("My Shelf");
+        shelf.setOwner(requester);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(requester));
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+        given(userRepository.findById(2L)).willReturn(Optional.of(target));
+        given(shelfInvitationRepository.existsByShelfIdAndRecipientIdAndStatus(1L, 2L, "PENDING")).willReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.inviteToShelf(1L, 1L, 2L));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(shelfInvitationRepository, never()).save(any());
+    }
+
+    // acceptShelfInvitation 
+
+    @Test
+    public void acceptShelfInvitation_convertsPrivateShelfToShared() {
+        User originalOwner = new User();
+        originalOwner.setId(3L);
+
+        Shelf privateShelf = new Shelf();
+        privateShelf.setId(2L);
+        privateShelf.setShared(false);
+        privateShelf.setOwner(originalOwner);
+        privateShelf.setOwners(new HashSet<>());
+
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setId(5L);
+        invitation.setRecipient(testUser);
+        invitation.setShelf(privateShelf);
+        invitation.setStatus("PENDING");
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfInvitationRepository.findById(5L)).willReturn(Optional.of(invitation));
+
+        assertDoesNotThrow(() -> libraryService.acceptShelfInvitation(1L, 5L));
+
+        assertTrue(privateShelf.getShared());
+        assertTrue(privateShelf.getOwners().contains(originalOwner));
+        assertTrue(privateShelf.getOwners().contains(testUser));
+        assertNull(privateShelf.getOwner());
+        assertEquals("ACCEPTED", invitation.getStatus());
+        verify(shelfRepository).save(privateShelf);
+        verify(shelfInvitationRepository).save(invitation);
+    }
+
+    @Test
+    public void acceptShelfInvitation_alreadySharedShelf_addsRecipient() {
+        User existingMember = new User();
+        existingMember.setId(3L);
+
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(2L);
+        sharedShelf.setShared(true);
+        sharedShelf.setOwner(null);
+        sharedShelf.setOwners(new HashSet<>(Set.of(existingMember)));
+
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setId(5L);
+        invitation.setRecipient(testUser);
+        invitation.setShelf(sharedShelf);
+        invitation.setStatus("PENDING");
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfInvitationRepository.findById(5L)).willReturn(Optional.of(invitation));
+
+        assertDoesNotThrow(() -> libraryService.acceptShelfInvitation(1L, 5L));
+
+        assertTrue(sharedShelf.getOwners().contains(testUser));
+        assertEquals("ACCEPTED", invitation.getStatus());
+        verify(shelfRepository).save(sharedShelf);
+    }
+
+    @Test
+    public void acceptShelfInvitation_nonRecipient_throws403() {
+        User realRecipient = new User();
+        realRecipient.setId(99L);
+
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setId(5L);
+        invitation.setRecipient(realRecipient);
+        invitation.setStatus("PENDING");
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfInvitationRepository.findById(5L)).willReturn(Optional.of(invitation));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.acceptShelfInvitation(1L, 5L));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(shelfRepository, never()).save(any());
+    }
+
+    @Test
+    public void acceptShelfInvitation_nonPendingStatus_throws409() {
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setId(5L);
+        invitation.setRecipient(testUser);
+        invitation.setStatus("ACCEPTED");
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfInvitationRepository.findById(5L)).willReturn(Optional.of(invitation));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.acceptShelfInvitation(1L, 5L));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(shelfRepository, never()).save(any());
+    }
+
+    // rejectShelfInvitation
+
+    @Test
+    public void rejectShelfInvitation_success() {
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setId(5L);
+        invitation.setRecipient(testUser);
+        invitation.setStatus("PENDING");
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfInvitationRepository.findById(5L)).willReturn(Optional.of(invitation));
+
+        assertDoesNotThrow(() -> libraryService.rejectShelfInvitation(1L, 5L));
+
+        assertEquals("REJECTED", invitation.getStatus());
+        verify(shelfInvitationRepository).save(invitation);
+    }
+
+    @Test
+    public void rejectShelfInvitation_nonRecipient_throws403() {
+        User realRecipient = new User();
+        realRecipient.setId(99L);
+
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setId(5L);
+        invitation.setRecipient(realRecipient);
+        invitation.setStatus("PENDING");
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfInvitationRepository.findById(5L)).willReturn(Optional.of(invitation));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.rejectShelfInvitation(1L, 5L));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+    }
+
+    @Test
+    public void rejectShelfInvitation_nonPendingStatus_throws409() {
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setId(5L);
+        invitation.setRecipient(testUser);
+        invitation.setStatus("REJECTED");
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfInvitationRepository.findById(5L)).willReturn(Optional.of(invitation));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.rejectShelfInvitation(1L, 5L));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(shelfInvitationRepository, never()).save(any(ShelfInvitation.class));
+    }
+
+    // getSharedShelves
+
+    @Test
+    public void getSharedShelves_returnsUserSharedShelves() {
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(10L);
+        sharedShelf.setName("Book Club");
+        sharedShelf.setShared(true);
+        testUser.getSharedShelves().add(sharedShelf);
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+
+        List<Shelf> result = libraryService.getSharedShelves(1L);
+
+        assertEquals(1, result.size());
+        assertTrue(result.contains(sharedShelf));
+    }
+
+    // deleteShelf (shared)
+
+    @Test
+    public void deleteShelf_sharedShelf_memberCanDelete() {
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(2L);
+        sharedShelf.setShared(true);
+        sharedShelf.setOwner(null);
+        sharedShelf.setOwners(new HashSet<>(Set.of(testUser)));
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(2L)).willReturn(Optional.of(sharedShelf));
+
+        assertDoesNotThrow(() -> libraryService.deleteShelf(1L, 2L));
+        verify(shelfRepository).delete(sharedShelf);
+    }
+
+    @Test
+    public void deleteShelf_sharedShelf_nonMember_throws403() {
+        User member = new User();
+        member.setId(3L);
+
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(2L);
+        sharedShelf.setShared(true);
+        sharedShelf.setOwner(null);
+        sharedShelf.setOwners(new HashSet<>(Set.of(member)));
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(2L)).willReturn(Optional.of(sharedShelf));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.deleteShelf(1L, 2L));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(shelfRepository, never()).delete(any());
+    }
+
+    // renameShelf (shared) 
+
+    @Test
+    public void renameShelf_sharedShelf_memberCanRename() {
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(2L);
+        sharedShelf.setShared(true);
+        sharedShelf.setOwner(null);
+        sharedShelf.setOwners(new HashSet<>(Set.of(testUser)));
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(2L)).willReturn(Optional.of(sharedShelf));
+
+        assertDoesNotThrow(() -> libraryService.renameShelf(1L, 2L, "New Name"));
+
+        assertEquals("New Name", sharedShelf.getName());
+        verify(shelfRepository).save(sharedShelf);
+    }
+
+    @Test
+    public void renameShelf_sharedShelf_nonMember_throws403() {
+        User member = new User();
+        member.setId(3L);
+
+        Shelf sharedShelf = new Shelf();
+        sharedShelf.setId(2L);
+        sharedShelf.setShared(true);
+        sharedShelf.setOwner(null);
+        sharedShelf.setOwners(new HashSet<>(Set.of(member)));
+
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(2L)).willReturn(Optional.of(sharedShelf));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> libraryService.renameShelf(1L, 2L, "New Name"));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+        verify(shelfRepository, never()).save(any());
+    }
 }
