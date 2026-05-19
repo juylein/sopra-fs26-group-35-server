@@ -14,4 +14,6 @@ public interface QuizResultRepository extends JpaRepository<QuizResult, Long> {
     List<QuizResult> findAllByQuiz_CreatedBy_IdOrderByQuiz_CreatedAtDesc(Long userId);
 
     List<QuizResult> findAllByUser_IdAndQuiz_Id(Long userId, Long quizId);
+
+    List<QuizResult> findAllByUser_Id(Long userId);
 }

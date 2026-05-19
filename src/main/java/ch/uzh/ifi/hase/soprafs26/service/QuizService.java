@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,19 +24,22 @@ public class QuizService {
     private final NotificationService notificationService;
     private final FriendshipsRepository friendshipsRepository;
     private final QuizResultRepository quizResultRepository;
+    private final BookRepository bookRepository;
 
     public QuizService(QuizRepository quizRepository,
                        QuizQuestionRepository quizQuestionRepository,
                        UserRepository userRepository,
                        NotificationService notificationService,
                        FriendshipsRepository friendshipsRepository,
-                       QuizResultRepository quizResultRepository) {
+                       QuizResultRepository quizResultRepository,
+                       BookRepository bookRepository) {
         this.quizRepository = quizRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
         this.friendshipsRepository = friendshipsRepository;
         this.quizResultRepository = quizResultRepository;
+        this.bookRepository = bookRepository;
     }
 
     private User getAuthenticatedUser(Long userId) {
@@ -117,7 +121,7 @@ public class QuizService {
             result.setQuiz(quiz);
             result.setUser(friend);
             result.setScoreTotal(quizQuestionRepository.findAllByQuiz_Id(quizId).size());
-            result.setScoreGot(null); // pending
+            result.setScoreGot(null);
             result.setAccepted(false);
             result.setCompleted(false);
             quizResultRepository.save(result);
@@ -144,7 +148,7 @@ public class QuizService {
                 .findTopByCreatedBy_IdOrderByCreatedAtDesc(userId);
 
         if (latestOpt.isEmpty()) {
-            return Optional.empty(); // ← no quiz yet, not an error
+            return Optional.empty();
         }
 
         Quiz latest = latestOpt.get();
@@ -175,7 +179,7 @@ public class QuizService {
 
     @Transactional
     public QuizResultEntryDTO submitQuiz(Long userId, Long quizId, List<Integer> answers) {
-        getAuthenticatedUser(userId);
+        User user = getAuthenticatedUser(userId);
 
         QuizResult result = quizResultRepository
                 .findAllByUser_IdAndQuiz_Id(userId, quizId)
@@ -187,11 +191,16 @@ public class QuizService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Quiz already completed");
         }
 
-        List<QuizQuestion> questions = quizQuestionRepository.findAllByQuiz_Id(quizId);
+        List<QuizQuestion> questions = quizQuestionRepository.findAllByQuiz_Id(quizId)
+                .stream()
+                .sorted(Comparator.comparing(QuizQuestion::getId))
+                .toList();
 
         int score = 0;
         for (int i = 0; i < Math.min(answers.size(), questions.size()); i++) {
-            if (answers.get(i).equals(questions.get(i).getCorrectOption())) {
+            Integer submitted = answers.get(i);
+            Integer correct = questions.get(i).getCorrectOption();
+            if (submitted != null && submitted.equals(correct)) {
                 score++;
             }
         }
@@ -201,8 +210,6 @@ public class QuizService {
         result.setCompleted(true);
         quizResultRepository.save(result);
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         if (user.getLeaderboard() != null) {
             user.getLeaderboard().addQuizPoints((long) score);
         }
@@ -243,7 +250,10 @@ public class QuizService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Quiz not found"));
 
-        List<QuizQuestion> questions = quizQuestionRepository.findAllByQuiz_Id(quizId);
+        List<QuizQuestion> questions = quizQuestionRepository.findAllByQuiz_Id(quizId)
+                .stream()
+                .sorted(Comparator.comparing(QuizQuestion::getId))
+                .toList();
 
         QuizTakeDTO dto = new QuizTakeDTO();
         dto.setQuizId(quiz.getId());
@@ -261,5 +271,34 @@ public class QuizService {
         }).toList());
 
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReceivedQuizResultDTO> getMyReceivedResults(Long userId) {
+        getAuthenticatedUser(userId);
+        return quizResultRepository.findAllByUser_Id(userId).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        res -> res.getQuiz().getId(),
+                        res -> res,
+                        (a, b) -> a
+                ))
+                .values().stream()
+                .map(res -> {
+                    ReceivedQuizResultDTO r = new ReceivedQuizResultDTO();
+                    r.setQuizId(res.getQuiz().getId());
+                    r.setQuizTitle(res.getQuiz().getTitle());
+                    r.setDifficulty(res.getQuiz().getDifficulty());
+                    r.setScoreGot(res.getScoreGot());
+                    r.setScoreTotal(res.getScoreTotal());
+                    r.setPending(!Boolean.TRUE.equals(res.getCompleted()) || res.getScoreGot() == null);
+
+                    if (res.getQuiz().getBookId() != null) {
+                        bookRepository.findById(res.getQuiz().getBookId()).ifPresent(book -> {
+                            r.setBookTitle(book.getName());
+                            r.setBookCoverUrl(book.getCoverUrl());
+                        });
+                    }
+                    return r;
+                }).toList();
     }
 }

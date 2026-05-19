@@ -84,4 +84,11 @@ public class QuizController {
             @PathVariable Long quizId) {
         return quizService.getQuizForTaking(userId, quizId);
     }
+
+    @GetMapping("/received")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<ReceivedQuizResultDTO> getReceivedResults(@PathVariable Long userId) {
+        return quizService.getMyReceivedResults(userId);
+    }
 }
