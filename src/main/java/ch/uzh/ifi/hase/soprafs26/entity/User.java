@@ -195,6 +195,10 @@ public class User implements Serializable {
 		this.shelves = shelves;
 	}
 
+	public Set<Shelf> getSharedShelves() {
+		return sharedShelves;
+	}
+
 	public Long getBooksRead(){
 		Shelf readShelf = getReadShelf();
 		return readShelf == null ? 0L: (long) readShelf.getBooks().size();

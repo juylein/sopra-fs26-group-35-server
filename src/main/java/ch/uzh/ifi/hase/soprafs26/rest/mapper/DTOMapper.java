@@ -6,6 +6,7 @@ import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * DTOMapper
@@ -78,15 +79,33 @@ public interface DTOMapper {
     @Mapping(source = "description", target = "description")
     @Mapping(source = "coverUrl", target = "coverUrl")
     @Mapping(target = "averageRating", ignore = true)
+    @Mapping(source = "reviews", target = "reviews")
     BookGetDTO convertBookEntityToGetDTO(Book book);
 
     @Mapping(source = "status", target = "status")
     ShelfBookPutDTO convertShelfBookEntityToPutDTO(ShelfBook ShelfBook);
 
+    @AfterMapping
+    default void customizeShelfMapping(Shelf shelf, @MappingTarget ShelfGetDTO dto) {
+        if (shelf.getShared()) {
+            dto.setMemberIds(shelf.getOwners().stream()
+                .map(User::getId)
+                .toList());
+            dto.setMemberUsernames(shelf.getOwners().stream()
+                .map(User::getUsername)
+                .toList());
+        } else if (shelf.getOwner() != null) {
+            dto.setMemberUsernames(List.of(shelf.getOwner().getUsername()));
+        }
+    }
+
     @Mapping(source = "id", target = "id")
     @Mapping(source = "name", target = "name")
     @Mapping(source = "shared", target = "shared")
+    @Mapping(source = "owner.id", target = "ownerId")
     @Mapping(source = "books", target = "shelfBooks")
+    @Mapping(target = "memberIds", ignore = true)
+    @Mapping(target = "memberUsernames", ignore = true)
     ShelfGetDTO convertShelfEntityToGetDTO(Shelf shelf);
     List<ShelfGetDTO> convertShelfEntitiesToGetDTOs(List<Shelf> shelves);
 
@@ -133,6 +152,16 @@ public interface DTOMapper {
     @Mapping(source = "id", target = "id")
     ReviewGetDTO convertReviewToGetDTO(Reviews review);
     List<ReviewGetDTO> convertReviewEntitiesToGetDTOs(List<Reviews> reviews);
+
+    @Mapping(source = "id", target = "id")
+    @Mapping(source = "sender.id", target = "senderId")
+    @Mapping(source = "sender.username", target = "senderUsername")
+    @Mapping(source = "shelf.id", target = "shelfId")
+    @Mapping(source = "shelf.name", target = "shelfName")
+    @Mapping(source = "status", target = "status")
+    @Mapping(source = "createdAt", target = "createdAt")
+    ShelfInvitationGetDTO convertShelfInvitationToGetDTO(ShelfInvitation invitation);
+    List<ShelfInvitationGetDTO> convertShelfInvitationsToGetDTOs(List<ShelfInvitation> invitations);
 
     @Mapping(source = "id", target = "id")
     @Mapping(source = "requester.id", target = "requesterId")

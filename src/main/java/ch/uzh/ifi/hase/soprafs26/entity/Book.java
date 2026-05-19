@@ -61,8 +61,8 @@ public class Book implements Serializable {
 	@OneToMany(mappedBy = "book")
 	private Set<Activities> activities;
 
-	@OneToMany(mappedBy = "book")
-	private Set<Reviews> reviews;
+	@OneToMany(mappedBy = "book", fetch = FetchType.EAGER)
+	private List<Reviews> reviews;
 
 	public String getId() {
 		return googleId;
@@ -126,6 +126,9 @@ public class Book implements Serializable {
 	public Set<ShelfBook> getShelves(){
 		return shelves;
 	}
+
+	public List<Reviews> getReviews() { return reviews; }
+	public void setReviews(List<Reviews> reviews) { this.reviews = reviews; }
 
 
 }

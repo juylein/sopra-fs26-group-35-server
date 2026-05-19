@@ -185,6 +185,15 @@ public class UserController {
 				.map(DTOMapper.INSTANCE::convertEntityToUserGetDTO)
 				.collect(Collectors.toList());
 	}
+
+    @GetMapping("/users/search")
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserGetDTO> searchUsers(@RequestParam String query) {
+        List<User> users = userService.searchByUsername(query);
+        return users.stream()
+                .map(DTOMapper.INSTANCE::convertEntityToUserGetDTO)
+                .collect(Collectors.toList());
+    }
 }
 
 
