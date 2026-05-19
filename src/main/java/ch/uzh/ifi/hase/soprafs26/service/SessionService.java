@@ -162,7 +162,6 @@ public class SessionService {
         shelfBookModel.setPagesRead(shelfBook.getPagesRead());
         shelfBookModel.setBook(bookModel);
         shelfBook.setStatus(BookStatus.READING);
-        activitiesService.addActivity(user, BookStatus.READING, shelfBook.getBook());
 
         List<Long> participantIds = session.getParticipants()
             .stream()

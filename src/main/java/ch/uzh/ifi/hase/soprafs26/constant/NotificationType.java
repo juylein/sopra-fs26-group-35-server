@@ -4,5 +4,6 @@ public enum NotificationType {
     SHARED_SESSION,
     FRIEND_REQUEST,
     QUIZ_CHALLENGE,
-    FRIEND_ACTIVITY
+    FRIEND_ACTIVITY,
+    SHELF_INVITATION
 }

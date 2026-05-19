@@ -4,11 +4,12 @@ import ch.uzh.ifi.hase.soprafs26.entity.Book;
 import ch.uzh.ifi.hase.soprafs26.entity.User;
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.entity.ShelfBook;
-
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfInvitation;
 
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.BookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
+import ch.uzh.ifi.hase.soprafs26.repository.ShelfInvitationRepository;
 
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.BookPostDTO;
@@ -23,7 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ch.uzh.ifi.hase.soprafs26.service.ActivitiesService;
 
 import ch.uzh.ifi.hase.soprafs26.constant.BookStatus;
+import ch.uzh.ifi.hase.soprafs26.constant.NotificationType;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,19 +40,26 @@ public class LibraryService {
     private final ShelfBookRepository shelfbookRepository;
     private final ActivitiesService activitiesService;
     private final UserRepository userRepository;
+    private final ShelfInvitationRepository shelfInvitationRepository;
+    private final NotificationService notificationService;
+    private static final List<String> STATUS_SHELF_NAMES = List.of("To Read", "Recent Readings", "Read");
 
     @Autowired
     public LibraryService(ShelfRepository shelfRepository,
                           BookRepository bookRepository,
                           ShelfBookRepository shelfbookRepository,
                           UserRepository userRepository,
-                          ActivitiesService activitiesService
+                          ActivitiesService activitiesService,
+                          ShelfInvitationRepository shelfInvitationRepository,
+                          NotificationService notificationService
                         ) {
       this.shelfRepository = shelfRepository;
       this.bookRepository = bookRepository;
       this.userRepository = userRepository;
       this.shelfbookRepository = shelfbookRepository;
       this.activitiesService = activitiesService;
+      this.shelfInvitationRepository = shelfInvitationRepository;
+      this.notificationService = notificationService;
     }
 
     private User getAuthenticatedUser(Long userId) {
@@ -243,8 +254,15 @@ public class LibraryService {
         User user = getAuthenticatedUser(userId);
         Shelf shelf = shelfRepository.findById(shelfId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
-        if(!shelf.getOwner().getId().equals(user.getId())){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+
+        if (shelf.getShared()) {
+            if (!shelf.getOwners().contains(user)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            }
+        } else {
+            if (!shelf.getOwner().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            }
         }
 
         shelfRepository.delete(shelf);
@@ -256,11 +274,127 @@ public class LibraryService {
         Shelf shelf = shelfRepository.findById(shelfId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
 
-        if (!shelf.getOwner().getId().equals(user.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        if (shelf.getShared()) {
+            if (!shelf.getOwners().contains(user)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            }
+        } else {
+            if (!shelf.getOwner().getId().equals(user.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+            }
         }
 
         shelf.setName(newName);
         shelfRepository.save(shelf);
+    }
+
+    public void inviteToShelf(Long userId, Long shelfId, Long targetUserId) {
+        User requester = getAuthenticatedUser(userId);
+
+        Shelf shelf = shelfRepository.findById(shelfId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+
+        if (STATUS_SHELF_NAMES.contains(shelf.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Status shelves (To Read, Recent Readings, Read) cannot be shared");
+        }
+
+        boolean isPrivateOwner = !shelf.getShared()
+                && shelf.getOwner() != null
+                && shelf.getOwner().getId().equals(requester.getId());
+        boolean isSharedMember = shelf.getShared() && shelf.getOwners().contains(requester);
+
+        if (!isPrivateOwner && !isSharedMember) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+
+        User target = userRepository.findById(targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "User with id " + targetUserId + " not found"));
+
+        if (!requester.getFriends().contains(target)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You can only invite friends to shared shelves");
+        }
+
+        boolean alreadyMember = (shelf.getOwner() != null && shelf.getOwner().getId().equals(target.getId()))
+                || shelf.getOwners().contains(target);
+        if (alreadyMember) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of this shelf");
+        }
+
+        if (shelfInvitationRepository.existsByShelfIdAndRecipientIdAndStatus(shelfId, target.getId(), "PENDING")) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "An invitation is already pending for this user");
+        }
+
+        ShelfInvitation invitation = new ShelfInvitation();
+        invitation.setSender(requester);
+        invitation.setRecipient(target);
+        invitation.setShelf(shelf);
+        ShelfInvitation saved = shelfInvitationRepository.save(invitation);
+
+        notificationService.createNotification(
+                target.getId(),
+                NotificationType.SHELF_INVITATION,
+                requester.getUsername() + " invited you to join the shelf \"" + shelf.getName() + "\"",
+                saved.getId()
+        );
+    }
+
+    public List<ShelfInvitation> getIncomingShelfInvitations(Long userId) {
+        User user = getAuthenticatedUser(userId);
+        return shelfInvitationRepository.findByRecipientIdAndStatus(user.getId(), "PENDING");
+    }
+
+    public void acceptShelfInvitation(Long userId, Long invitationId) {
+        User recipient = getAuthenticatedUser(userId);
+
+        ShelfInvitation invitation = shelfInvitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invitation not found"));
+
+        if (!invitation.getRecipient().getId().equals(recipient.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+        if (!"PENDING".equals(invitation.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invitation is no longer pending");
+        }
+
+        Shelf shelf = invitation.getShelf();
+
+        if (!shelf.getShared()) {
+            // First acceptance: convert private shelf to shared
+            shelf.setShared(true);
+            shelf.getOwners().add(shelf.getOwner());
+            shelf.setOwner(null);
+        }
+
+        shelf.getOwners().add(recipient);
+        shelfRepository.save(shelf);
+
+        invitation.setStatus("ACCEPTED");
+        invitation.setResolvedAt(LocalDateTime.now());
+        shelfInvitationRepository.save(invitation);
+    }
+
+    public void rejectShelfInvitation(Long userId, Long invitationId) {
+        User recipient = getAuthenticatedUser(userId);
+
+        ShelfInvitation invitation = shelfInvitationRepository.findById(invitationId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Invitation not found"));
+
+        if (!invitation.getRecipient().getId().equals(recipient.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
+        }
+        if (!"PENDING".equals(invitation.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Invitation is no longer pending");
+        }
+
+        invitation.setStatus("REJECTED");
+        invitation.setResolvedAt(LocalDateTime.now());
+        shelfInvitationRepository.save(invitation);
+    }
+
+    public List<Shelf> getSharedShelves(Long userId) {
+        User user = getAuthenticatedUser(userId);
+        return new ArrayList<>(user.getSharedShelves());
     }
 }

@@ -1,11 +1,13 @@
 package ch.uzh.ifi.hase.soprafs26.controller;
 
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfInviteDTO;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfInvitationGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPutDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
-import ch.uzh.ifi.hase.soprafs26.entity.User;
+import ch.uzh.ifi.hase.soprafs26.entity.ShelfInvitation;
 
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfGetDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfPostDTO;
@@ -83,5 +85,41 @@ public class LibraryController {
             @PathVariable Long shelfId,
             @RequestBody ShelfPutDTO shelfPutDTO) {
         libraryService.renameShelf(userId, shelfId, shelfPutDTO.getName());
+    }
+
+    @PostMapping("/shelves/{shelfId}/members")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void inviteToShelf(
+            @PathVariable Long userId,
+            @PathVariable Long shelfId,
+            @RequestBody ShelfInviteDTO shelfInviteDTO) {
+        libraryService.inviteToShelf(userId, shelfId, shelfInviteDTO.getTargetUserId());
+    }
+
+    @GetMapping("/shelf-invitations")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<ShelfInvitationGetDTO> getIncomingShelfInvitations(@PathVariable Long userId) {
+        List<ShelfInvitation> invitations = libraryService.getIncomingShelfInvitations(userId);
+        return DTOMapper.INSTANCE.convertShelfInvitationsToGetDTOs(invitations);
+    }
+
+    @PutMapping("/shelf-invitations/{invitationId}/accept")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void acceptShelfInvitation(@PathVariable Long userId, @PathVariable Long invitationId) {
+        libraryService.acceptShelfInvitation(userId, invitationId);
+    }
+
+    @PutMapping("/shelf-invitations/{invitationId}/reject")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void rejectShelfInvitation(@PathVariable Long userId, @PathVariable Long invitationId) {
+        libraryService.rejectShelfInvitation(userId, invitationId);
+    }
+
+    @GetMapping("/shared-shelves")
+    @ResponseStatus(HttpStatus.OK)
+    @ResponseBody
+    public List<ShelfGetDTO> getSharedShelves(@PathVariable Long userId) {
+        return DTOMapper.INSTANCE.convertShelfEntitiesToGetDTOs(libraryService.getSharedShelves(userId));
     }
 }
