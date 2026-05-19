@@ -107,4 +107,39 @@ public class LeaderboardServiceTest {
 
         assertNull(result);
     }
+    @Test
+    void addReadingPoints_updatesTotalCorrectly() {
+
+    Leaderboard leaderboard = new Leaderboard();
+    leaderboard.setTotalPoints();
+
+    leaderboard.addReadingPoints(100L);
+
+    assertEquals(100L, leaderboard.getReadingPoints());
+    assertEquals(100L, leaderboard.getTotalPoints());
+}
+
+    @Test
+    void addQuizzPoints_updatesTotalCorrectly() {
+
+    Leaderboard leaderboard = new Leaderboard();
+    leaderboard.setTotalPoints();
+
+    leaderboard.addQuizzPoints(50L);
+
+    assertEquals(50L, leaderboard.getQuizzPoints());
+    assertEquals(50L, leaderboard.getTotalPoints());
+}
+
+    @Test
+    void addingBothPointTypes_updatesCombinedTotal() {
+
+    Leaderboard leaderboard = new Leaderboard();
+    leaderboard.setTotalPoints();
+
+    leaderboard.addReadingPoints(100L);
+    leaderboard.addQuizzPoints(40L);
+
+    assertEquals(140L, leaderboard.getTotalPoints());
+}
 }

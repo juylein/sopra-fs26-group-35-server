@@ -15,10 +15,15 @@ import ch.uzh.ifi.hase.soprafs26.entity.Shelf;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.LeaderboardRepository;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class UserServiceTest {
 
@@ -97,6 +102,47 @@ public class UserServiceTest {
 	}
 
     @Test
+    public void createUser_emptyPassword_throws400() {
+
+    User user = new User();
+    user.setUsername("test");
+    user.setPassword("");
+
+    ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.createUser(user)
+    );
+
+    assertEquals(400, ex.getStatusCode().value());
+}
+
+    @Test
+    public void createUser_emptyUsername_throws400() {
+
+    User user = new User();
+    user.setUsername("");
+    user.setPassword("password");
+
+    ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.createUser(user)
+    );
+
+    assertEquals(400, ex.getStatusCode().value());
+}
+
+    @Test
+    public void createUser_createsDefaultShelves() {
+
+    Mockito.when(userRepository.save(Mockito.any())).thenReturn(testUser);
+
+    userService.createUser(testUser);
+
+    verify(shelfRepository, times(3))
+            .save(Mockito.any(Shelf.class));
+}
+
+    @Test
     public void getUserById_validId_success() {
         Mockito.when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
@@ -170,4 +216,135 @@ public class UserServiceTest {
 
         assertThrows(ResponseStatusException.class, () -> userService.loginUser(loginInput));
     }
+
+    @Test
+    public void logoutUser_validUser_success() {
+
+    testUser.setToken("valid-token");
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "valid-token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    Mockito.when(userRepository.findById(1L))
+            .thenReturn(Optional.of(testUser));
+
+    userService.logoutUser(1L);
+
+    assertEquals(UserStatus.OFFLINE, testUser.getStatus());
+    assertNull(testUser.getToken());
+
+    verify(userRepository, times(1)).flush();
+}
+
+@Test
+public void logoutUser_wrongToken_throws403() {
+
+    testUser.setToken("correct-token");
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "wrong-token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    Mockito.when(userRepository.findById(1L))
+            .thenReturn(Optional.of(testUser));
+
+    ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.logoutUser(1L)
+    );
+
+    assertEquals(403, ex.getStatusCode().value());
+}
+@Test
+public void logoutUser_userNotFound_throws404() {
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    Mockito.when(userRepository.findById(1L))
+            .thenReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.logoutUser(1L)
+    );
+
+    assertEquals(404, ex.getStatusCode().value());
+}
+@Test
+public void update_validInput_updatesUser() {
+
+    testUser.setToken("valid-token");
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "valid-token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    Mockito.when(userRepository.findById(1L))
+            .thenReturn(Optional.of(testUser));
+
+    userService.update(
+            1L,
+            "newPassword",
+            "new bio",
+            List.of("Fantasy", "Sci-Fi")
+    );
+
+    assertEquals("new bio", testUser.getBio());
+    assertEquals(List.of("Fantasy", "Sci-Fi"), testUser.getGenres());
+
+    verify(userRepository, times(1)).save(testUser);
+}
+@Test
+public void update_wrongToken_throws403() {
+
+    testUser.setToken("correct-token");
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "wrong-token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    Mockito.when(userRepository.findById(1L))
+            .thenReturn(Optional.of(testUser));
+
+    ResponseStatusException ex = assertThrows(
+            ResponseStatusException.class,
+            () -> userService.update(1L, null, null, null)
+    );
+
+    assertEquals(403, ex.getStatusCode().value());
+}
+@Test
+public void searchByUsername_returnsMatchingUsers() {
+
+    Mockito.when(userRepository.findByUsernameContainingIgnoreCase("test"))
+            .thenReturn(List.of(testUser));
+
+    List<User> result = userService.searchByUsername("test");
+
+    assertEquals(1, result.size());
+    assertEquals("testUsername", result.get(0).getUsername());
+}
 }
