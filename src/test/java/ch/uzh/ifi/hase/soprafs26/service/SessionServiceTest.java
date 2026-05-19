@@ -29,11 +29,13 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -206,64 +208,60 @@ public class SessionServiceTest {
 
     // --- joinSession ---
 
-  @Test
-  public void joinSession_validInput_savesParticipant_updatesBook_sendsNotifications() {
-
-    // given
-    Session session = new Session();
-    session.setId(10L);
-
-    SessionParticipant existingParticipant = new SessionParticipant();
-    existingParticipant.setUser(user2);
-
-    session.setParticipants(List.of(existingParticipant));
-
-    Book book = new Book();
-    book.setId("book-1");
-    book.setName("Harry Potter");
-    book.setPages((long) 500);
-
-    ShelfBook shelfBook = new ShelfBook();
-    shelfBook.setId(50L);
-    shelfBook.setBook(book);
-    shelfBook.setPagesRead(20L);
-
-    given(sessionRepository.findById(10L))
-            .willReturn(Optional.of(session));
-
-    given(userRepository.findById(1L))
-            .willReturn(Optional.of(user1));
-
-    given(shelfBookRepository.findById(50L))
-            .willReturn(Optional.of(shelfBook));
-
-    // when
-    sessionService.joinSession(10L, 1L, 50L);
-
-    // then
-
-    verify(sessionParticipantRepository, times(1))
-            .save(any(SessionParticipant.class));
-
-    verify(sessionParticipantRepository, times(1))
-            .flush();
-
-
-    assertEquals(BookStatus.READING, shelfBook.getStatus());
-
-
-    verify(activitiesService, times(1))
-            .addActivity(user1, BookStatus.READING, book);
-
-
-    verify(notificationService, times(1))
-            .sendSessionJoin(
-                    eq(10L),
-                    eq(1L),
-                    eq(2L),
-                    any(ShelfBookGetDTO.class)
-            );
-}
+    @Test
+    public void joinSession_validInput_savesParticipant_updatesBook_sendsNotifications() {
+    
+        // given
+        Session session = new Session();
+        session.setId(10L);
+    
+        SessionParticipant existingParticipant = new SessionParticipant();
+        existingParticipant.setUser(user2);
+    
+        session.setParticipants(List.of(existingParticipant));
+    
+        Book book = new Book();
+        book.setId("book-1");
+        book.setName("Harry Potter");
+        book.setPages(500L);
+    
+        ShelfBook shelfBook = new ShelfBook();
+        shelfBook.setId(50L);
+        shelfBook.setBook(book);
+        shelfBook.setPagesRead(20L);
+        shelfBook.setStatus(BookStatus.UNREAD);
+    
+        given(sessionRepository.findById(10L))
+                .willReturn(Optional.of(session));
+    
+        given(userRepository.findById(1L))
+                .willReturn(Optional.of(user1));
+    
+        given(shelfBookRepository.findById(50L))
+                .willReturn(Optional.of(shelfBook));
+    
+        // when
+        sessionService.joinSession(10L, 1L, 50L);
+    
+        // then
+        verify(sessionParticipantRepository, times(1))
+                .save(any(SessionParticipant.class));
+    
+        verify(sessionParticipantRepository, times(1))
+                .flush();
+    
+        assertEquals(BookStatus.READING, shelfBook.getStatus());
+    
+        verify(notificationService, times(1))
+                .sendSessionJoin(
+                        eq(10L),
+                        eq(1L),
+                        eq(2L),
+                        any(ShelfBookGetDTO.class)
+                );
+    
+        verifyNoInteractions(activitiesService);
+    }
 
 @Test
 public void joinSession_sessionNotFound_throws404() {
