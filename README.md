@@ -1,118 +1,121 @@
-# SoPra RESTful Service Template FS26
+# Bookshelf Server
 
-## Getting started with Spring Boot
--   Documentation: https://docs.spring.io/spring-boot/docs/current/reference/html/index.html
--   Guides: http://spring.io/guides
-    -   Building a RESTful Web Service: http://spring.io/guides/gs/rest-service/
-    -   Building REST services with Spring: https://spring.io/guides/tutorials/rest/
+Bookshelf is a social reading application for tracking books, reading progress, reviews, friendships, shared shelves, and reading sessions. This repository contains the Spring Boot backend that exposes the REST API, persistence layer, security configuration, and WebSocket infrastructure used by the Bookshelf client.
 
-## Setup this Template with your IDE of choice
-Download your IDE of choice (e.g., [IntelliJ](https://www.jetbrains.com/idea/download/), [Visual Studio Code](https://code.visualstudio.com/), or [Eclipse](http://www.eclipse.org/downloads/)). Make sure Java 17 is installed on your system (for Windows, please make sure your `JAVA_HOME` environment variable is set to the correct version of Java).
+The goal is to support a reading experience that feels both personal and social: users can maintain their own library, discover progress over time, connect with friends, and participate in shared reading activity.
 
-### IntelliJ
-If you consider to use IntelliJ as your IDE of choice, you can make use of your free educational license [here](https://www.jetbrains.com/community/education/#students).
-1. File -> Open... -> SoPra server template
-2. Accept to import the project as a `gradle project`
-3. To build right click the `build.gradle` file and choose `Run Build`
+## Technologies
 
-### VS Code
-The following extensions can help you get started more easily:
--   `vmware.vscode-spring-boot`
--   `vscjava.vscode-spring-initializr`
--   `vscjava.vscode-spring-boot-dashboard`
--   `vscjava.vscode-java-pack`
+- Java 17
+- Spring Boot 4 with Web MVC, Spring Security, JPA, WebSocket, and H2
+- Gradle Wrapper
+- MapStruct for DTO/entity mapping
+- JUnit 5, Spring Boot Test, Mockito, and JaCoCo
+- SonarCloud analysis
+- Google App Engine deployment workflow
 
-**Note:** You'll need to build the project first with Gradle, just click on the `build` command in the _Gradle Tasks_ extension. Then check the _Spring Boot Dashboard_ extension if it already shows `soprafs26` and hit the play button to start the server. If it doesn't show up, restart VS Code and check again.
+## High-Level Components
 
-## Building with Gradle
-You can use the local Gradle Wrapper to build the application.
--   macOS: `./gradlew`
--   Linux: `./gradlew`
--   Windows: `./gradlew.bat`
+### REST Controllers
 
-More Information about [Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html) and [Gradle](https://gradle.org/docs/).
+The controller layer receives HTTP requests, validates route parameters and request bodies, and delegates business logic to services. Key entry points include [UserController](./src/main/java/ch/uzh/ifi/hase/soprafs26/controller/UserController.java) for registration, login, profiles, stats, leaderboard, activities, and friends; [LibraryController](./src/main/java/ch/uzh/ifi/hase/soprafs26/controller/LibraryController.java) for shelves and shelf books; [SessionController](./src/main/java/ch/uzh/ifi/hase/soprafs26/controller/SessionController.java) for reading sessions; [BookController](./src/main/java/ch/uzh/ifi/hase/soprafs26/controller/BookController.java) and [ReviewController](./src/main/java/ch/uzh/ifi/hase/soprafs26/controller/ReviewController.java) for book detail and review flows.
 
-### Build
+### Service Layer
+
+The service layer owns the application rules. [UserService](./src/main/java/ch/uzh/ifi/hase/soprafs26/service/UserService.java) handles authentication-related user behavior, [LibraryService](./src/main/java/ch/uzh/ifi/hase/soprafs26/service/LibraryService.java) manages shelves/books/shared library access, [SessionService](./src/main/java/ch/uzh/ifi/hase/soprafs26/service/SessionService.java) calculates reading session state and progress, [FriendService](./src/main/java/ch/uzh/ifi/hase/soprafs26/service/FriendService.java) handles social relationships, and [NotificationService](./src/main/java/ch/uzh/ifi/hase/soprafs26/service/NotificationService.java) creates user-facing events.
+
+### Persistence Model
+
+Domain state is represented by JPA entities in [src/main/java/ch/uzh/ifi/hase/soprafs26/entity](./src/main/java/ch/uzh/ifi/hase/soprafs26/entity), including users, books, shelves, shelf books, sessions, participants, reviews, friendships, activities, notifications, and leaderboard entries. Repository interfaces in [src/main/java/ch/uzh/ifi/hase/soprafs26/repository](./src/main/java/ch/uzh/ifi/hase/soprafs26/repository) provide the database access used by services.
+
+### DTO Mapping and API Boundaries
+
+The REST API does not expose entities directly. Request/response DTOs live in [src/main/java/ch/uzh/ifi/hase/soprafs26/rest/dto](./src/main/java/ch/uzh/ifi/hase/soprafs26/rest/dto), and [DTOMapper](./src/main/java/ch/uzh/ifi/hase/soprafs26/rest/mapper/DTOMapper.java) converts between DTOs and entities with MapStruct.
+
+### Security and Real-Time Messaging
+
+[SecurityConfig](./src/main/java/ch/uzh/ifi/hase/soprafs26/SecurityConfig.java) and [AuthTokenFilter](./src/main/java/ch/uzh/ifi/hase/soprafs26/AuthTokenFilter.java) configure token-based request authentication. [WebSocketConfig](./src/main/java/ch/uzh/ifi/hase/soprafs26/WebSocketConfig.java) enables STOMP over SockJS at `/ws`, with `/topic` and `/queue` broker destinations for real-time notifications and session updates.
+
+## Launch & Deployment
+
+### Prerequisites
+
+- Java 17
+- No global Gradle installation is required; use the included Gradle Wrapper.
+- The application uses an in-memory H2 database by default, so no external database is needed for local development.
+
+### Local Setup
 
 ```bash
 ./gradlew build
-```
-
-### Run
-
-```bash
 ./gradlew bootRun
 ```
 
-You can verify that the server is running by visiting `localhost:8080` in your browser.
+The server runs on [http://localhost:8080](http://localhost:8080). The H2 console is available at [http://localhost:8080/h2-console](http://localhost:8080/h2-console) while the server is running.
 
-### Test
+Use these local H2 settings from [src/main/resources/application.properties](./src/main/resources/application.properties):
+
+```text
+JDBC URL: jdbc:h2:mem:testdb
+User: sa
+Password:
+```
+
+### Tests and Reports
 
 ```bash
 ./gradlew test
+./gradlew jacocoTestReport
 ```
 
+For the same quality checks used by CI:
+
+```bash
+./gradlew test jacocoTestReport sonar
+```
+
+The `sonar` task requires the `SONAR_TOKEN` environment variable in CI or your local shell.
+
 ### Development Mode
-You can start the backend in development mode, this will automatically trigger a new build and reload the application
-once the content of a file has been changed.
 
-Start two terminal windows and run:
+For automatic rebuilds during development, run these in two terminals:
 
-`./gradlew build --continuous`
+```bash
+./gradlew build --continuous -xtest
+./gradlew bootRun
+```
 
-and in the other one:
+### Docker
 
-`./gradlew bootRun`
+```bash
+docker build -t bookshelf-server .
+docker run -p 8080:8080 bookshelf-server
+```
 
-If you want to avoid running all tests with every change, use the following command instead:
+### Releases
 
-`./gradlew build --continuous -xtest`
+The repository includes a Google App Engine deployment workflow in [.github/workflows/main.yml](./.github/workflows/main.yml). Pushes to `main` run the configured CI/deployment pipeline when `GCP_SERVICE_CREDENTIALS`, `SONAR_TOKEN`, and the standard GitHub token are available. App Engine runtime settings are defined in [app.yaml](./app.yaml).
 
-## API Endpoint Testing with Postman
-We recommend using [Postman](https://www.getpostman.com) to test your API Endpoints.
+The Docker workflow can also publish a container image when Docker Hub secrets are configured.
 
-## Debugging
-If something is not working and/or you don't know what is going on. We recommend using a debugger and step-through the process step-by-step.
+## Roadmap
 
-To configure a debugger for SpringBoot's Tomcat servlet (i.e. the process you start with `./gradlew bootRun` command), do the following:
+- Replace the local in-memory H2 setup with a persistent production database configuration and migration strategy.
+- Add richer social challenge endpoints, such as reading goals, streaks, and friend competitions.
+- Expand WebSocket usage so active shared sessions show participant progress in real time.
 
-1. Open Tab: **Run**/Edit Configurations
-2. Add a new Remote Configuration and name it properly
-3. Start the Server in Debug mode: `./gradlew bootRun --debug-jvm`
-4. Press `Shift + F9` or the use **Run**/Debug "Name of your task"
-5. Set breakpoints in the application where you need it
-6. Step through the process one step at a time
+## Authors and Acknowledgment
 
-## Testing
-Have a look here: https://www.baeldung.com/spring-boot-testing
+Built by SoPra FS26 Group 35:
 
-<br>
-<br>
-<br>
+- [@juylein](https://github.com/juylein)
+- [@missbo-cyber](https://github.com/missbo-cyber)
+- [@vanmey](https://github.com/vanmey)
+- [@fraiaperezrayonforsman-cloud](https://github.com/fraiaperezrayonforsman-cloud)
+- [@minhgou](https://github.com/minhgou)
 
-## Docker
+This project was developed for the Software Engineering Lab at the University of Zurich. We acknowledge the SoPra teaching team and the maintainers of Spring Boot, Gradle, H2, MapStruct, and the other open-source libraries used here.
 
-### Introduction
-This year Docker will be used to ease the process of deployment.\
-Docker is a tool that uses containers as isolated environments, ensuring that the application runs consistently and uniformly across different devices.\
-Everything in this repository is already set up to minimize your effort for deployment.\
-All changes to the main branch will automatically be pushed to dockerhub and optimized for production.
+## License
 
-### Setup
-1. **One** member of the team should create an account on [dockerhub](https://hub.docker.com/), _incorporating the group number into the account name_, for example, `SoPra_group_XX`.\
-2. This account then creates a repository on dockerhub with the _same name as the group's Github repository name_.\
-3. Finally, the person's account details need to be added as [secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository) to the group's repository:
-    - dockerhub_username (the username of the dockerhub account from step 1, for example, `SoPra_group_XX`)
-    - dockerhub_password (a generated PAT([personal access token](https://docs.docker.com/docker-hub/access-tokens/)) of the account with read and write access)
-    - dockerhub_repo_name (the name of the dockerhub repository from step 2)
-
-### Pull and run
-Once the image is created and has been successfully pushed to dockerhub, the image can be run on any machine.\
-Ensure that [Docker](https://www.docker.com/) is installed on the machine you wish to run the container.\
-First, pull (download) the image with the following command, replacing your username and repository name accordingly.
-
-```docker pull <dockerhub_username>/<dockerhub_repo_name>```
-
-Then, run the image in a container with the following command, again replacing _<dockerhub_username>_ and _<dockerhub_repo_name>_ accordingly.
-
-```docker run -p 3000:3000 <dockerhub_username>/<dockerhub_repo_name>```
+This project is licensed under the Apache License 2.0. See [LICENSE](./LICENSE) for the full license text.
