@@ -15,6 +15,7 @@ import ch.uzh.ifi.hase.soprafs26.repository.SessionParticipantRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.SessionRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.ShelfBookRepository;
 import ch.uzh.ifi.hase.soprafs26.repository.UserRepository;
+import ch.uzh.ifi.hase.soprafs26.rest.dto.ShelfBookGetDTO;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,13 +25,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
@@ -54,6 +60,12 @@ public class SessionServiceTest {
 
     @Mock
     private LeaderboardRepository leaderboardRepository;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private ActivitiesService activitiesService;
 
     @InjectMocks
     private SessionService sessionService;
@@ -195,6 +207,309 @@ public class SessionServiceTest {
     }
 
     // --- joinSession ---
+
+    @Test
+    public void joinSession_validInput_savesParticipant_updatesBook_sendsNotifications() {
+    
+        // given
+        Session session = new Session();
+        session.setId(10L);
+    
+        SessionParticipant existingParticipant = new SessionParticipant();
+        existingParticipant.setUser(user2);
+    
+        session.setParticipants(List.of(existingParticipant));
+    
+        Book book = new Book();
+        book.setId("book-1");
+        book.setName("Harry Potter");
+        book.setPages(500L);
+    
+        ShelfBook shelfBook = new ShelfBook();
+        shelfBook.setId(50L);
+        shelfBook.setBook(book);
+        shelfBook.setPagesRead(20L);
+        shelfBook.setStatus(BookStatus.UNREAD);
+    
+        given(sessionRepository.findById(10L))
+                .willReturn(Optional.of(session));
+    
+        given(userRepository.findById(1L))
+                .willReturn(Optional.of(user1));
+    
+        given(shelfBookRepository.findById(50L))
+                .willReturn(Optional.of(shelfBook));
+    
+        // when
+        sessionService.joinSession(10L, 1L, 50L);
+    
+        // then
+        verify(sessionParticipantRepository, times(1))
+                .save(any(SessionParticipant.class));
+    
+        verify(sessionParticipantRepository, times(1))
+                .flush();
+    
+        assertEquals(BookStatus.READING, shelfBook.getStatus());
+    
+        verify(notificationService, times(1))
+                .sendSessionJoin(
+                        eq(10L),
+                        eq(1L),
+                        eq(2L),
+                        any(ShelfBookGetDTO.class)
+                );
+    
+        verifyNoInteractions(activitiesService);
+    }
+
+@Test
+public void joinSession_sessionNotFound_throws404() {
+
+    given(sessionRepository.findById(99L)).willReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.joinSession(99L, 1L, 1L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+}
+
+@Test
+public void joinSession_userNotFound_throws404() {
+
+    Session session = new Session();
+    session.setId(10L);
+
+    given(sessionRepository.findById(10L)).willReturn(Optional.of(session));
+    given(userRepository.findById(99L)).willReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.joinSession(10L, 99L, 1L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+}
+
+@Test
+public void joinSession_shelfBookNotFound_throws404() {
+
+    Session session = new Session();
+    session.setId(10L);
+
+    given(sessionRepository.findById(10L)).willReturn(Optional.of(session));
+    given(userRepository.findById(1L)).willReturn(Optional.of(user1));
+    given(shelfBookRepository.findById(99L)).willReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.joinSession(10L, 1L, 99L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+}
+
+// --- UpdatePagesRead ---
+
+@Test
+public void changeNumberOfPagesSession_validInput_updatesPagesAndSendsNotifications() {
+
+    // given
+    Session session = new Session();
+    session.setId(10L);
+
+    SessionParticipant participant = new SessionParticipant();
+    participant.setUser(user1);
+    participant.setSession(session);
+
+    SessionParticipant otherParticipant = new SessionParticipant();
+    otherParticipant.setUser(user2);
+
+    session.setParticipants(List.of(participant, otherParticipant));
+
+    given(sessionRepository.findById(10L))
+            .willReturn(Optional.of(session));
+
+    given(userRepository.findById(1L))
+            .willReturn(Optional.of(user1));
+
+    given(sessionParticipantRepository.findBySessionAndUser(session, user1))
+            .willReturn(Optional.of(participant));
+
+    // when
+    sessionService.changeNumberOfPagesSession(10L, 1L, 150L);
+
+    // then
+    assertEquals(150L, participant.getPagesRead());
+
+    verify(sessionParticipantRepository, times(1))
+            .save(participant);
+
+    verify(sessionParticipantRepository, times(1))
+            .flush();
+
+    verify(notificationService, times(1))
+            .sendSessionChangePage(
+                    10L,
+                    1L,
+                    2L,
+                    150L
+            );
+}
+
+@Test
+public void changeNumberOfPagesSession_sessionNotFound_throws404() {
+
+    given(sessionRepository.findById(99L))
+            .willReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.changeNumberOfPagesSession(99L, 1L, 100L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+}
+
+@Test
+public void changeNumberOfPagesSession_userNotFound_throws404() {
+
+    Session session = new Session();
+    session.setId(10L);
+
+    given(sessionRepository.findById(10L))
+            .willReturn(Optional.of(session));
+
+    given(userRepository.findById(99L))
+            .willReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.changeNumberOfPagesSession(10L, 99L, 100L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+}
+
+@Test
+public void changeNumberOfPagesSession_participantNotFound_throws404() {
+
+    Session session = new Session();
+    session.setId(10L);
+
+    given(sessionRepository.findById(10L))
+            .willReturn(Optional.of(session));
+
+    given(userRepository.findById(1L))
+            .willReturn(Optional.of(user1));
+
+    given(sessionParticipantRepository.findBySessionAndUser(session, user1))
+            .willReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.changeNumberOfPagesSession(10L, 1L, 100L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+}
+
+// -- deleteOldSession ---
+@Test
+public void deleteOldSessions_deletesSessionsOlderThan30Days() {
+
+    // given
+    Session oldSession1 = new Session();
+    oldSession1.setId(1L);
+    oldSession1.setEndTime(LocalDateTime.now().minusDays(40));
+
+    Session oldSession2 = new Session();
+    oldSession2.setId(2L);
+    oldSession2.setEndTime(LocalDateTime.now().minusDays(31));
+
+    List<Session> oldSessions = List.of(oldSession1, oldSession2);
+
+    given(sessionRepository.findByEndTimeBefore(any(LocalDateTime.class)))
+            .willReturn(oldSessions);
+
+    // when
+    sessionService.deleteOldSessions();
+
+    // then
+    verify(sessionRepository, times(1))
+            .deleteAll(oldSessions);
+}
+
+// --- gerLatestSession ---
+
+@Test
+public void getLatestSessionForUser_validAccess_returnsSession() {
+
+    // given
+    Session session = new Session();
+    session.setId(10L);
+
+    user1.setToken("valid-token");
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "valid-token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    given(userRepository.findById(1L))
+            .willReturn(Optional.of(user1));
+
+    given(sessionRepository.findLatestSessionForUser(1L))
+            .willReturn(Optional.of(session));
+
+    // when
+    Session result = sessionService.getLatestSessionForUser(1L);
+
+    // then
+    assertNotNull(result);
+    assertEquals(10L, result.getId());
+
+    verify(sessionRepository, times(1))
+            .findLatestSessionForUser(1L);
+}
+
+@Test
+public void getLatestSessionForUser_userNotFound_throws404() {
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    given(userRepository.findById(99L))
+            .willReturn(Optional.empty());
+
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.getLatestSessionForUser(99L));
+
+    assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
+}
+
+@Test
+public void getLatestSessionForUser_wrongToken_throws403() {
+
+    // given
+    user1.setToken("correct-token");
+
+    UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                    null,
+                    "wrong-token"
+            );
+
+    SecurityContextHolder.getContext().setAuthentication(authentication);
+
+    given(userRepository.findById(1L))
+            .willReturn(Optional.of(user1));
+
+    // when
+    ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+            () -> sessionService.getLatestSessionForUser(1L));
+
+    // then
+    assertEquals(HttpStatus.FORBIDDEN, ex.getStatusCode());
+}
 
     // --- leaveSession ---
 

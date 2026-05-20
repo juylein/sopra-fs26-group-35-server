@@ -21,6 +21,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -198,6 +200,29 @@ public class FriendServiceTest {
 
         assertNotNull(result);
         verify(friendRequestRepository, times(1)).findByRequester_Id(1L);
+    }
+
+        @Test
+        public void getFriends_validUser_returnsFriendsList() {
+        Friendships f = new Friendships();
+        f.setUserA(requester);
+        f.setUserB(recipient);
+
+        when(friendshipsRepository.findByUserA_Id(1L)).thenReturn(List.of(f));
+
+        List<User> result = friendService.getFriends(1L);
+
+        assertEquals(1, result.size());
+        assertEquals(recipient.getId(), result.get(0).getId());
+    }
+
+    @Test
+    public void getFriends_noFriends_returnsEmptyList() {
+        when(friendshipsRepository.findByUserA_Id(1L)).thenReturn(List.of());
+
+        List<User> result = friendService.getFriends(1L);
+
+        assertTrue(result.isEmpty());
     }
 
 }

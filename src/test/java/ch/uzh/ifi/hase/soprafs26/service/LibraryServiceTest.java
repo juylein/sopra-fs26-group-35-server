@@ -369,6 +369,36 @@ public class LibraryServiceTest {
         verify(shelfBookRepository, never()).delete(any());
     }
 
+    @Test
+    public void renameShelf_validInput_success() {
+        Shelf shelf = new Shelf();
+        shelf.setId(1L);
+        shelf.setOwner(testUser);
+    
+        given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+        given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+    
+        libraryService.renameShelf(1L, 1L, "New Name");
+    
+        assertEquals("New Name", shelf.getName());
+        verify(shelfRepository).save(shelf);
+    }
+
+    @Test
+    public void renameShelf_notOwner_throws403() {
+    User other = new User();
+    other.setId(2L);
+
+    Shelf shelf = new Shelf();
+    shelf.setId(1L);
+    shelf.setOwner(other);
+
+    given(userRepository.findById(1L)).willReturn(Optional.of(testUser));
+    given(shelfRepository.findById(1L)).willReturn(Optional.of(shelf));
+
+    assertThrows(ResponseStatusException.class,
+            () -> libraryService.renameShelf(1L, 1L, "x"));
+}
     // inviteToShelf
 
     @Test
