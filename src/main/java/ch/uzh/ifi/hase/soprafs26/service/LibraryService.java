@@ -105,7 +105,7 @@ public class LibraryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
 
         boolean isOwner = shelf.getOwner() != null && shelf.getOwner().getId().equals(user.getId());
-        boolean isMember = shelf.getOwners().contains(user);
+        boolean isMember = shelf.getOwners().stream().anyMatch(o -> o.getId().equals(user.getId()));
 
         if (!isOwner && !isMember){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
@@ -161,7 +161,7 @@ public class LibraryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         
         boolean isOwner = shelf.getOwner() != null && shelf.getOwner().getId().equals(requestingUser.getId());
-        boolean isMember = shelf.getOwners().contains(requestingUser);
+        boolean isMember = shelf.getOwners().stream().anyMatch(o -> o.getId().equals(requestingUser.getId()));
 
         if(!isOwner && !isMember){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
@@ -256,7 +256,7 @@ public class LibraryService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
 
         if (shelf.getShared()) {
-            if (!shelf.getOwners().contains(user)) {
+            if (shelf.getOwners().stream().noneMatch(o -> o.getId().equals(user.getId()))) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
             }
         } else {
@@ -265,7 +265,32 @@ public class LibraryService {
             }
         }
 
+        shelfInvitationRepository.deleteByShelfId(shelfId);
         shelfRepository.delete(shelf);
+    }
+
+    public void leaveSharedShelf(Long userId, Long shelfId) {
+        User user = getAuthenticatedUser(userId);
+        Shelf shelf = shelfRepository.findById(shelfId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
+
+        if (!shelf.getShared()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Shelf is not shared");
+        }
+
+        boolean isMember = shelf.getOwners().stream().anyMatch(o -> o.getId().equals(user.getId()));
+        if (!isMember) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not a member of this shelf");
+        }
+
+        shelf.getOwners().removeIf(o -> o.getId().equals(user.getId()));
+
+        if (shelf.getOwners().isEmpty()) {
+            shelfInvitationRepository.deleteByShelfId(shelfId);
+            shelfRepository.delete(shelf);
+        } else {
+            shelfRepository.save(shelf);
+        }
     }
 
     public void renameShelf(Long userId, Long shelfId, String newName) {
@@ -275,7 +300,7 @@ public class LibraryService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Shelf not found"));
 
         if (shelf.getShared()) {
-            if (!shelf.getOwners().contains(user)) {
+            if (shelf.getOwners().stream().noneMatch(o -> o.getId().equals(user.getId()))) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
             }
         } else {
@@ -302,7 +327,7 @@ public class LibraryService {
         boolean isPrivateOwner = !shelf.getShared()
                 && shelf.getOwner() != null
                 && shelf.getOwner().getId().equals(requester.getId());
-        boolean isSharedMember = shelf.getShared() && shelf.getOwners().contains(requester);
+        boolean isSharedMember = shelf.getShared() && shelf.getOwners().stream().anyMatch(o -> o.getId().equals(requester.getId()));
 
         if (!isPrivateOwner && !isSharedMember) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
@@ -317,7 +342,7 @@ public class LibraryService {
         }
 
         boolean alreadyMember = (shelf.getOwner() != null && shelf.getOwner().getId().equals(target.getId()))
-                || shelf.getOwners().contains(target);
+                || shelf.getOwners().stream().anyMatch(o -> o.getId().equals(target.getId()));
         if (alreadyMember) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member of this shelf");
         }

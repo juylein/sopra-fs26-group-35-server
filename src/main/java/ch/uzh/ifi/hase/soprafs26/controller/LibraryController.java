@@ -122,4 +122,10 @@ public class LibraryController {
     public List<ShelfGetDTO> getSharedShelves(@PathVariable Long userId) {
         return DTOMapper.INSTANCE.convertShelfEntitiesToGetDTOs(libraryService.getSharedShelves(userId));
     }
+
+    @DeleteMapping("/shared-shelves/{shelfId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void leaveSharedShelf(@PathVariable Long userId, @PathVariable Long shelfId) {
+        libraryService.leaveSharedShelf(userId, shelfId);
+    }
 }

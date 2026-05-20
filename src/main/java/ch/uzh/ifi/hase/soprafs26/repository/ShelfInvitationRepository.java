@@ -10,4 +10,5 @@ import java.util.List;
 public interface ShelfInvitationRepository extends JpaRepository<ShelfInvitation, Long> {
     List<ShelfInvitation> findByRecipientIdAndStatus(Long recipientId, String status);
     boolean existsByShelfIdAndRecipientIdAndStatus(Long shelfId, Long recipientId, String status);
+    void deleteByShelfId(Long shelfId);
 }
