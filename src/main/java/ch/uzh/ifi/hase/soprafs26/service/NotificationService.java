@@ -146,10 +146,14 @@ public class NotificationService {
 
     public void deleteNotification(Long userId, Long notificationId) {
         Notifications notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Notification not found"));
+
         if (!notification.getRecipient().getId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "This notification does not belong to this user");
         }
+
         notificationRepository.delete(notification);
     }
 

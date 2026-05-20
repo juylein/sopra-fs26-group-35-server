@@ -124,7 +124,7 @@ public class UserService {
 		Leaderboard leaderboard = new Leaderboard();
 		leaderboard.setUser(newUser);
 		leaderboard.addReadingPoints(0L);
-		leaderboard.addQuizzPoints(0L);
+		leaderboard.addQuizPoints(0L);
 
 		leaderboardRepository.save(leaderboard);
 

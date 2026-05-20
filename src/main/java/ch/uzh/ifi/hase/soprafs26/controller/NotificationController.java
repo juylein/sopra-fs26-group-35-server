@@ -43,7 +43,9 @@ public class NotificationController {
 
     @DeleteMapping("/users/{userId}/notifications/{notificationId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteNotification(@PathVariable Long userId, @PathVariable Long notificationId) {
+    public void deleteNotification(
+            @PathVariable Long userId,
+            @PathVariable Long notificationId) {
         notificationService.deleteNotification(userId, notificationId);
     }
 }

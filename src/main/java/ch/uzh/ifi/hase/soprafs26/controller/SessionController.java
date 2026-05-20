@@ -12,6 +12,7 @@ import ch.uzh.ifi.hase.soprafs26.rest.dto.SessionSendNotificationPostDTO;
 import ch.uzh.ifi.hase.soprafs26.rest.mapper.DTOMapper;
 import ch.uzh.ifi.hase.soprafs26.service.SessionService;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -74,9 +75,11 @@ public class SessionController {
     }
 
     @GetMapping("/latest")
-    @ResponseStatus(HttpStatus.OK)
-    public SessionGetDTO getLatestSession(@PathVariable Long userId) {
+    public ResponseEntity<SessionGetDTO> getLatestSession(@PathVariable Long userId) {
         Session session = sessionService.getLatestSessionForUser(userId);
+
+        if (session == null) return ResponseEntity.noContent().build();
+
         SessionGetDTO sessionGetDTO = DTOMapper.INSTANCE.convertSessionToGetDTO(session);
 
         session.getParticipants().stream()
@@ -89,7 +92,7 @@ public class SessionController {
                     sessionGetDTO.setPagesRead(p.getPagesRead());
                 });
 
-        return sessionGetDTO;
+        return ResponseEntity.ok(sessionGetDTO);
     }
 
     @PutMapping("/{sessionId}/readPage")
