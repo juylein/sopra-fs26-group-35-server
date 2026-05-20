@@ -120,14 +120,14 @@ public class LeaderboardServiceTest {
 }
 
     @Test
-    void addQuizzPoints_updatesTotalCorrectly() {
+    void addQuizPoints_updatesTotalCorrectly() {
 
     Leaderboard leaderboard = new Leaderboard();
     leaderboard.setTotalPoints();
 
-    leaderboard.addQuizzPoints(50L);
+    leaderboard.addQuizPoints(50L);
 
-    assertEquals(50L, leaderboard.getQuizzPoints());
+    assertEquals(50L, leaderboard.getQuizPoints());
     assertEquals(50L, leaderboard.getTotalPoints());
 }
 
@@ -138,7 +138,7 @@ public class LeaderboardServiceTest {
     leaderboard.setTotalPoints();
 
     leaderboard.addReadingPoints(100L);
-    leaderboard.addQuizzPoints(40L);
+    leaderboard.addQuizPoints(40L);
 
     assertEquals(140L, leaderboard.getTotalPoints());
 }
